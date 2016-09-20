@@ -1,0 +1,254 @@
+
+		-------------------
+		   Coding Style
+		-------------------
+
+This is a short document describing the coding C style for 
+this project. Coding style is very personal, however developer 
+should understand software is most of the times tested, 
+used and debugged by others. Coding style is all about 
+readability and maintainability. In a perfect world, anyone must be able 
+to easily understood and maintains any software components.
+
+1. Linux kernel.
+
+Project coding style IS the linux kernel coding style available at
+https://www.kernel.org/doc/Documentation/CodingStyle. One must read it
+deeply with attention, reconfigure its own editor to be compliant with this
+coding style. To check your component coding style, the kernel checkpatch.pl 
+script has been integrated in alchemy and can be easily executed on your 
+component source files using command:
+> ./build.sh -A <component>-codecheck
+
+2. Open sources libraries.
+
+Component uses several open source libraries having their own coding styles.
+Developer should be careful on modification made or extension
+(plugins, classes) on those libraries.
+If you are editing code, take a few minutes to look at the code around you and
+determine its style. 
+GLib and Gobject use Gnome GTK coding style.
+GStreamer use spirit of GObject and use similar coding idioms.
+Rygel use its own coding style.
+Use common sense and BE CONSISTENT
+If library use spaces around their if clauses, you should, too. 
+If their comments have little boxes of stars around them, make your comments 
+have little boxes of stars around them too. If code you add to a file looks 
+drastically different from the existing code around it, the discontinuity 
+throws readers out of their rhythm when they go to read it. Try to avoid this.
+
+However, if you integrate one of those libraries you MUST use Linux kernel
+coding style.
+
+4. 64-bit portability
+
+Component code should be 64-bit and 32-bit friendly. Bear in mind problems 
+of printing, comparisons, and structure alignment.
+
+5. Logging
+
+Component MUST use ulog as UNIQUE logging system.
+ulog can redirect log to CKCM, stderr... 
+By default ulog write messages into a kernel buffer which can be read 
+using ulogcat tool. To build ulog kernel driver for your PC read file
+http://canari/cgi-bin/cgit.cgi/pulsar/ulog.git/tree/kernel/README
+More details on ulog can be found at https://smet/projects/pulsar/wiki/Log.
+Use the best logging level for each of your messages. 
+Do not choose CRITICAL, ERROR, WARNING levels if your messages is a 
+normal/regular one. In other words, do not use those levels if your are not 
+ready to stand up from your seat, go upstairs to read the message at 
+your colleague's screen !
+
+Do not forget to redirect integrated libraries log to ulog in your component.
+
+6. Software Configuration
+
+Use only runtime configuration. No build-time configuration (Config.in).
+Main reason for that is to use same binaries on several products using
+different configurations. The second one is to easily generate prebuild
+version of drones platform without any restriction on features.
+
+Runtime configuration can be achieved by:
+- configuration file located in '/etc' directory (ex: /etc/<component>.conf).
+- options and arguments in command line for binaries.
+
+Options and arguments in command line MUST always take precedence over
+configuration file. If a binary have options or arguments then one must create 
+a --help option to list them explicitly.
+
+7. Symbols Visibility
+
+Libraries must control their own symbols visibility.
+Only publics symbols must be visible. Internal symbols must be hidden.
+This prevent library integrators to use private methods whether intentionally
+ or not. Visibility control can be done in the following way:
+1/ add '-fvisibility=hidden' in your CFLAGS to ensure all symbols
+becomes hidden by default.
+2/ use gcc __attribute__((visibility("default"))) to restore public visibility
+on your public API for each public symbols.
+
+8. Memory Allocation
+- One must be consistent with memory allocation, if an API allocates memory and
+return an it as an object, the same API must provide a function to destroy
+object and release memory, this because the underlying object allocated can
+later be more complex to free so a simple free won't suffice anymore.
+
+- Don't tell your life when malloc fails, just handle the case and return
+to caller.
+ex:
+	void* data = malloc(16);
+	if(data == NULL)
+		LOGW("Unable to allocate memory"); <--- don't do that.
+
+Allocation of such small amount of memory is likely to succeed and extra
+space allocated in data space by all such strings could prevent you to allocate
+ the memory in the first place... Moreover if this allocation does fail,
+the overall software is likely to crash very soon as well and your message
+won't help. An assert can be used in this case when the size allocated is
+known at compile time and is quite small (a few hundred Bytes).
+With this coverity will be happy. When size is unknown or quite big
+(several kBytes), proper check is required.
+
+9. Buffers Size
+Always give size of data buffer between function that will access/modify it,
+do not assume its length. Specify the size as size_t preferably.
+Remember to use '%z' modifier and not '%d' to print size_t in your printf
+format, this to avoid warnings on 64 bits.
+
+10. const/static/extern.
+When a parameter of a function is a pointer whose content will not be modifed,
+add the const keyword. It will enforce some checks and avoid some warning
+when already const data are passed down to some API that mises the const
+attribute.
+
+Put functions/variables that are only local to a file as static.
+It will enforce there visibility to the file.
+A good way is to add '-Wmissing-prototypes' in your CFLAGS.
+For each functions not declared, either you miss to declare it in a header file
+or your miss to prepend static before function.
+
+The extern keyword for variables shall only appear once and in a header file.
+This is to avoid type mismatch that is not caught in C.
+Note: it is even better to avoid shared global variables to avoid improper
+use/modifications.
+
+11. mixing C/C++.
+C code can call functions implemented in C++ and C++ code can call
+functions implemented in C. However both language use different name mangling
+(ie the 'real' name as seen by the linker) so extra stuff shall be done
+all C functions callable from c++ and all c++ functions callable from C
+shall be declared as extern "C". As this attribute is only known by
+c++ compiler, this declaration shall be encapsulated by
+#ifdef __cplusplus / #endif.
+All Library developpers must ensure C++ programs see the correct linkage to
+their public API. They must include these kind of c++ guard in their headers.
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+...
+
+#ifdef __cplusplus
+}
+#endif
+
+12. Avoid threads profusion
+When creating new thread, one must take care of impact it has on the process,
+data lock mechanisms and system scheduling.
+Muti-Threaded process are complex to understand and hard to debug,
+one may prefer asynchronous multiplexing operation whether its possible.
+Developers need to be aware of select(), poll(), epoll(), read(), write(),
+timerfd_create(), eventfd(), signalfd() and O_NONBLOCK flag concepts
+If you are not familiar with those syscalls, take time to read man page.
+
+13. C++
+
+If you think you known C++, take a look at this site http://yosefk.com/c++fqa.
+It describes some common pitfalls of the language.
+
+- templates : you should not need to define template classes. Their main usage
+  should be for containers and the STL already define a bunch of them.
+
+- STL : you can use it for containers and strings.
+
+- STL iterator : only useful with containers without ramdom access (like lists).
+  For vectors, an index will work and be more readable.
+
+- Multiple inheritance : avoid it when base classes have anything else that pure
+  virtual methods. Tolerated when implementing several interfaces in a single
+  class.
+
+- Copy constructor/assignment operator : if you get a Coverity warning about
+  them, don't rush into implementing them (especially if done wrong). They are
+  rarely used, declare them as private without any implementation. The compiler
+  will shout if you ever try to use them. You can use some macro like
+  DECLARE_NO_COPY_CLASS to simplify the syntax (example of definition and use
+  can be found in current Parrot code).
+
+/* use this macro either at top or bottom of your class header */
+#define DECLARE_NO_COPY_CLASS(classname) \
+    private: \
+        classname(const classname&); \
+        classname& operator=(const classname&);
+
+
+- Object array : be careful, if you declare arrays of objects that use inheritance
+  For example, if B uses A as a base classes, the following will compile but will
+  not work as expected : A* array = new B[32];
+  The array will hold B instances but will be used as if it was A's. Offset in
+  array will be wrong....
+  If you need collections of objects, uses collections of pointers for complex
+  objects (so no need of recopy). You can use arrays of object for simple objects
+  that are just struct-like with methods or std:string.
+
+- Do not use initialization list in constructor (unless you are force to). They
+  don't speed up anything, and reduce readability. Moreover, the order of
+  initialization shall be the same as the order of declaration or you will get a
+  warning (because the order of declaration actually dictates the real order
+  of initialization).
+
+- exceptions : don't use them. They are not available on all systems and can lead
+  to serious resource leaks if not used correctly. Moreover there is no possibility
+  to enforce checking like in java.
+
+- rtti (runtime type information) : not available on all systems (android), so
+  don't use dynamic_cast.
+
+- c++ cast : c-style cast are easier to read and work the same when dynamic cast
+  and/or multiple inheritance is not used.
+
+- iostream : a read or write method is more user friendly that a bunch of '<<'
+  or '>>'.
+
+- reference : you should not need them, pointers will do the job as well.
+  However, useful to pass constant non-null structure or strings or retrieve
+  constant ref to a string member.
+  ex : const std::string& str
+
+- const : put accessors methods as 'const'. It enforces the fact that the method
+  will not modify the object. As in C use them for parameters.
+
+- operator overloading : rarely nedeed except in some basic classes like strings
+  provided  by the STL.
+
+- smart pointers : avoid using them, it tries to hide reference counting but you
+  still need to know what you do to avoid cycles and memory leaks. Explicit ref
+  counting and deciding who is owner of what is usually better an less error prone.
+
+- namespace : use namespace to put your classes. The name shall be in lower case.
+
+- classes : camel case with first letter in capital.
+
+- members fields : put a 'm' prefix and then the name in camel case with first
+ letter in capital.
+
+- methods : camel case with first letter in lower case.
+
+- indentation : same as in C for methods and function bodies. Do not indent the
+  content of the namespace (this prevent a level of indentation on a complete
+  file for nothing). Inside a class definition, use one level of indentation.
+
+80% of the developers understand at most 20% of the language. It is not the same
+20% for different people, so don't count on them to understand each other's code.
+
