@@ -80,8 +80,8 @@ struct mbox *mbox_new(size_t msg_size)
 	struct mbox *box;
 	int i, ret;
 
-	/* message size must be lesser than PIPE_BUF (for atomic write) */
-	if (msg_size == 0 || msg_size >= PIPE_BUF)
+	/* message size must be lesser than MBOX_PIPE_BUF (for atomic write) */
+	if (msg_size == 0 || msg_size >= MBOX_PIPE_BUF)
 		return NULL;
 
 	/* allocate mbox */

@@ -74,5 +74,6 @@
 #include <futils/list.h>
 #include <futils/timetools.h>
 #include <futils/synctools.h>
+#include <futils/mbox.h>
 
 #endif /*_FUTILS_H_ */

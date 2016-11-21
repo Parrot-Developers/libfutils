@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 /* value taken from POSIX.1-2001 */
-#define PIPE_BUF 512
+#define MBOX_PIPE_BUF 512
 
 struct mbox;
 
