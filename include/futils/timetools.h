@@ -41,6 +41,14 @@ extern "C" {
 #endif
 
 /**
+ * @brief Get the system time using the monotonic clock
+ *
+ * @param ts The timespec to fill
+ * @return 0 on success, negative errno value on errors
+ */
+int time_get_monotonic(struct timespec *ts);
+
+/**
  * @brief Compute a subtraction of two timespec values.
  *
  * @param start timespec start time

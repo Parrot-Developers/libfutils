@@ -37,6 +37,99 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(timetools);
 
+#ifdef _WIN32
+
+#include <windows.h>
+
+int time_get_monotonic(struct timespec *tp)
+{
+	LARGE_INTEGER freq, count;
+
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&count);
+	tp->tv_sec = (time_t)(count.QuadPart / freq.QuadPart);
+	tp->tv_nsec = (long)((1000 * 1000 * 1000 *
+			(count.QuadPart % freq.QuadPart)) /
+			(freq.QuadPart));
+
+	return 0;
+}
+
+#elif defined(__MACH__)
+
+#include <mach/mach_time.h>
+#include <sys/time.h>
+
+#ifndef CLOCK_REALTIME
+
+#define CLOCK_REALTIME   0
+#define CLOCK_MONOTONIC  6
+
+/* codecheck_ignore[NEW_TYPEDEFS] */
+typedef int clockid_t;
+
+#else /* !CLOCK_REALTIME */
+#define ARSDK_MACH_HAS_CLOCK_GETTIME
+#endif /* !CLOCK_REALTIME */
+
+static int time_get_monotonic_internal_mach(struct timespec *tp)
+{
+	uint64_t nsecs;
+	static double nsmul;
+	static mach_timebase_info_data_t nsratio = { 0, 0 };
+	if (nsratio.denom == 0) {
+		mach_timebase_info(&nsratio);
+		nsmul = (double)nsratio.numer / nsratio.denom;
+	}
+	nsecs = mach_absolute_time() * nsmul;
+	tp->tv_sec = nsecs / 1000000000ULL;
+	tp->tv_nsec = nsecs % 1000000000ULL;
+	return 0;
+}
+
+int time_get_monotonic(struct timespec *ts)
+{
+#ifdef ARSDK_MACH_HAS_CLOCK_GETTIME
+	if (clock_gettime)
+		return clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
+	return time_get_monotonic_internal_mach(ts);
+}
+
+#elif defined(THREADX_OS)
+
+#include <AmbaDataType.h>
+#include <AmbaUtility.h>
+
+int time_get_monotonic(struct timespec *out)
+{
+	UINT64 ts;
+
+	if (!ts)
+		return -EINVAL;
+
+	AmbaUtility_GetHighResolutionTimeStamp(&ts);
+	out->tv_sec  = ts / 1000000ULL; /* us -> s */
+	out->tv_nsec = (ts % 1000000ULL) * 1000; /* us -> ns */
+
+	return 0;
+}
+
+#else
+
+int time_get_monotonic(struct timespec *ts)
+{
+	int ret;
+
+	ret = clock_gettime(CLOCK_MONOTONIC, ts);
+	if (ret < 0)
+		return -errno;
+
+	return 0;
+}
+
+#endif
+
 int time_timespec_diff(const struct timespec *start,
 		       const struct timespec *end,
 		       struct timespec *diff)
@@ -133,10 +226,10 @@ int time_timespec_diff_now(const struct timespec *value, struct timespec *diff)
 	if (!diff || !value)
 		return -EINVAL;
 
-	ret = clock_gettime(CLOCK_MONOTONIC, &now);
+	ret = time_get_monotonic(&now);
 	if (ret < 0) {
-		ULOGE("clock_gettime error: %m");
-		return -errno;
+		ULOGE("time_get_monotonic error: %s", strerror(-ret));
+		return ret;
 	}
 
 	return time_timespec_diff(value, &now, diff);
