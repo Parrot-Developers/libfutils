@@ -15,6 +15,7 @@ LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/timetools.c \
 	src/synctools.c \
+	src/systimetools.c \
 	src/mbox.c
 
 include $(BUILD_LIBRARY)
