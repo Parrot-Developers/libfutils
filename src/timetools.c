@@ -189,6 +189,15 @@ int time_timespec_diff_in_range(const struct timespec *t1,
 	return diff_us < range_us;
 }
 
+int time_timespec_to_ns(const struct timespec *value, uint64_t *ns)
+{
+	if (!value || !ns)
+		return -EINVAL;
+
+	*ns = (uint64_t)value->tv_sec * 1000000000UL + value->tv_nsec;
+	return 0;
+}
+
 int time_timespec_to_us(const struct timespec *value, uint64_t *us)
 {
 	if (!value || !us)

@@ -75,6 +75,15 @@ int time_timespec_diff_in_range(const struct timespec *t1,
 				uint64_t *diff_us);
 
 /**
+ * @brief Convert a timespec value to uint64_t in nsec.
+ *
+ * @param value timespec value
+ * @param ns pointer to nsec filled by function on success
+ * @return 0 on success, negative errno value on errors
+ */
+int time_timespec_to_ns(const struct timespec *value, uint64_t *ns);
+
+/**
  * @brief Convert a timespec value to uint64_t in usec.
  *
  * @param value timespec value
