@@ -36,9 +36,6 @@
 extern "C" {
 #endif
 
-/* value taken from POSIX.1-2001 */
-#define MBOX_PIPE_BUF 512
-
 struct mbox;
 
 /**
@@ -75,7 +72,7 @@ int mbox_get_read_fd(const struct mbox *box);
  * @param[in] mbox Handle of the mail box
  * @param[in] msg The message to send
  *
- * @return size of what has been written on success
+ * @return 0 on success,
  *         negative errno on error
  */
 int mbox_push(struct mbox *box, const void *msg);
@@ -86,7 +83,7 @@ int mbox_push(struct mbox *box, const void *msg);
  * @param[in] mbox Handle of the mail box
  * @param[out] msg The message read
  *
- * @return size of what has been read on success
+ * @return 0 on success,
  *         negative errno on error
  */
 int mbox_peek(struct mbox *box, void *msg);

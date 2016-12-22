@@ -35,6 +35,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <limits.h>
+#include "futils/fdutils.h"
 #include "futils/mbox.h"
 
 struct mbox {
@@ -44,44 +46,13 @@ struct mbox {
 	size_t msg_size;
 };
 
-static int set_close_on_exec(int fd)
-{
-	int old, ret;
-
-	old = fcntl(fd, F_GETFD, 0);
-	if (old < 0)
-		return -errno;
-
-	ret = fcntl(fd, F_SETFD, FD_CLOEXEC | old);
-	if (ret < 0)
-		return -errno;
-
-	return 0;
-}
-
-
-static int add_fd_flags(int fd, int flags)
-{
-	int old, ret;
-
-	old = fcntl(fd, F_GETFL, 0);
-	if (old < 0)
-		return -errno;
-
-	ret = fcntl(fd, F_SETFL, old | flags);
-	if (ret < 0)
-		return -errno;
-
-	return 0;
-}
-
 struct mbox *mbox_new(size_t msg_size)
 {
 	struct mbox *box;
 	int i, ret;
 
-	/* message size must be lesser than MBOX_PIPE_BUF (for atomic write) */
-	if (msg_size == 0 || msg_size >= MBOX_PIPE_BUF)
+	/* message size must be lesser than PIPE_BUF (for atomic write) */
+	if (msg_size == 0 || msg_size >= PIPE_BUF)
 		return NULL;
 
 	/* allocate mbox */
@@ -98,8 +69,8 @@ struct mbox *mbox_new(size_t msg_size)
 
 	/* set pipes non blocking and CLOEXEC flag */
 	for (i = 0; i < 2; i++) {
-		add_fd_flags(box->fds[i], O_NONBLOCK);
-		set_close_on_exec(box->fds[i]);
+		fd_add_flags(box->fds[i], O_NONBLOCK);
+		fd_set_close_on_exec(box->fds[i]);
 	}
 
 	box->msg_size = msg_size;
@@ -133,6 +104,8 @@ int mbox_push(struct mbox *box, const void *msg)
 		ret = write(box->fds[1], msg, box->msg_size);
 	} while (ret == -1 && errno == EINTR);
 
+	/* msg_size is less than PIPE_BUF so if the write is successful, it
+	 * means that ALL the data has been properly written */
 	return (ret < 0) ? -errno : 0;
 }
 
@@ -152,6 +125,8 @@ int mbox_peek(struct mbox *box, void *msg)
 	if (ret == 0)
 		return -EPIPE;
 
+	/* msg_size is less than PIPE_BUF so a successful read means all data
+	 * been properly read*/
 	return (ret < 0) ? -errno : 0;
 }
 
