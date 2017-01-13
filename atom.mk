@@ -17,7 +17,13 @@ LOCAL_SRC_FILES := \
 	src/synctools.c \
 	src/systimetools.c \
 	src/mbox.c \
+
+ifneq ("$(TARGET_OS)","darwin")
+ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
+LOCAL_SRC_FILES += \
 	src/dynmbox.c
+endif
+endif
 
 include $(BUILD_LIBRARY)
 
