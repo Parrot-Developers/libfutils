@@ -1,5 +1,5 @@
-/******************************************************************************
- * Copyright (c) 2015 Parrot S.A.
+/**
+ * Copyright (c) 2017 Parrot S.A.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,59 +23,35 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @file futils.h
+ * @file futils_tests.c
  *
- * @brief utility C functions & macro
+ * @brief libfutils unit tests.
  *
- *****************************************************************************/
-
-#ifndef _FUTILS_H_
-#define _FUTILS_H_
-
-/**
- * macro used to retrieve number of element of a static fixed array
  */
-#define SIZEOF_ARRAY(x) (sizeof((x)) / sizeof((x)[0]))
 
-/**
- * macro used to stringify text
- */
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
+#include "futils_test.h"
+#include "stdlib.h"
 
-/**
- * MIN and MAX macro
- */
-#ifndef MIN
-#define MIN(a, b) \
-   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#endif /* MIN */
+extern CU_TestInfo s_dynmbox_tests[];
 
-#ifndef MAX
-#define MAX(a, b) \
-   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-#endif /* MAX */
+static CU_SuiteInfo s_suites[] = {
+	{(char *)"dynmbox", NULL, NULL, s_dynmbox_tests},
+	CU_SUITE_INFO_NULL,
+};
 
-/**
- * STATIC_ASSERT() can be used to perform many compile-time assertions:
- * type sizes, etc...
- */
-#ifdef __COVERITY__
-#  define STATIC_ASSERT(x, msg)
-#else
-#  define STATIC_ASSERT(x, msg) typedef char __STATIC_ASSERT__[(x)?1:-1]
-#endif
-
-/**
- * include libfutils headers
- **/
-#include <futils/fdutils.h>
-#include <futils/hash.h>
-#include <futils/list.h>
-#include <futils/timetools.h>
-#include <futils/systimetools.h>
-#include <futils/synctools.h>
-#include <futils/mbox.h>
-#include <futils/dynmbox.h>
-
-#endif /*_FUTILS_H_ */
+int main(void)
+{
+	CU_initialize_registry();
+	CU_register_suites(s_suites);
+	if (getenv("CUNIT_OUT_NAME") != NULL)
+		CU_set_output_filename(getenv("CUNIT_OUT_NAME"));
+	if (getenv("CUNIT_AUTOMATED") != NULL) {
+		CU_automated_run_tests();
+		CU_list_tests_to_file();
+	} else {
+		CU_basic_set_mode(CU_BRM_VERBOSE);
+		CU_basic_run_tests();
+	}
+	CU_cleanup_registry();
+	return 0;
+}

@@ -16,7 +16,22 @@ LOCAL_SRC_FILES := \
 	src/timetools.c \
 	src/synctools.c \
 	src/systimetools.c \
-	src/mbox.c
+	src/mbox.c \
+	src/dynmbox.c
 
 include $(BUILD_LIBRARY)
 
+# Unit testing
+ifdef TARGET_TEST
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := tst-libfutils
+LOCAL_SRC_FILES := \
+	tests/futils_test.c \
+	tests/futils_test_dynmbox.c
+
+LOCAL_LIBRARIES := libfutils libcunit
+
+include $(BUILD_EXECUTABLE)
+
+endif

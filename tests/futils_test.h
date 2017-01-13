@@ -1,5 +1,5 @@
-/******************************************************************************
- * Copyright (c) 2015 Parrot S.A.
+/*
+ * Copyright (c) 2017 Parrot S.A.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,59 +23,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @file futils.h
+ * @file futils_test.h
  *
- * @brief utility C functions & macro
+ * @brief futils test private stuff.
  *
- *****************************************************************************/
-
-#ifndef _FUTILS_H_
-#define _FUTILS_H_
-
-/**
- * macro used to retrieve number of element of a static fixed array
  */
-#define SIZEOF_ARRAY(x) (sizeof((x)) / sizeof((x)[0]))
 
-/**
- * macro used to stringify text
- */
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
+#ifndef _FUTILS_TEST_H_
+#define _FUTILS_TEST_H_
 
-/**
- * MIN and MAX macro
- */
-#ifndef MIN
-#define MIN(a, b) \
-   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#endif /* MIN */
+#include <limits.h>
+#include <unistd.h>
+#include "futils/futils.h"
+#include <CUnit/CUnit.h>
+#include <CUnit/Basic.h>
+#include <CUnit/Automated.h>
 
-#ifndef MAX
-#define MAX(a, b) \
-   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-#endif /* MAX */
 
-/**
- * STATIC_ASSERT() can be used to perform many compile-time assertions:
- * type sizes, etc...
- */
-#ifdef __COVERITY__
-#  define STATIC_ASSERT(x, msg)
-#else
-#  define STATIC_ASSERT(x, msg) typedef char __STATIC_ASSERT__[(x)?1:-1]
-#endif
+/** Generic log */
+#define ULOG(_fmt, ...)   fprintf(stderr, _fmt "\n", ##__VA_ARGS__)
+/** Log as debug */
+#define ULOGD(_fmt, ...)  ULOG("[D]" _fmt, ##__VA_ARGS__)
+/** Log as info */
+#define ULOGI(_fmt, ...)  ULOG("[I]" _fmt, ##__VA_ARGS__)
+/** Log as warning */
+#define ULOGW(_fmt, ...)  ULOG("[W]" _fmt, ##__VA_ARGS__)
+/** Log as error */
+#define ULOGE(_fmt, ...)  ULOG("[E]" _fmt, ##__VA_ARGS__)
 
-/**
- * include libfutils headers
- **/
-#include <futils/fdutils.h>
-#include <futils/hash.h>
-#include <futils/list.h>
-#include <futils/timetools.h>
-#include <futils/systimetools.h>
-#include <futils/synctools.h>
-#include <futils/mbox.h>
-#include <futils/dynmbox.h>
-
-#endif /*_FUTILS_H_ */
+#endif /* _FUTILS_TEST_H_ */
