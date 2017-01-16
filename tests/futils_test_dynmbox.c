@@ -154,13 +154,13 @@ static void test_dynmbox_push_smaller_than_pipe_buf(void)
 
 	/* Push a message of the max possible size : this should work */
 	ret = dynmbox_push(box, msg, max_msg_size);
-	CU_ASSERT_EQUAL(ret, max_msg_size);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box);
 
 	/* Push a message of a smaller size */
 	ret = dynmbox_push(box, msg, max_msg_size / 2);
-	CU_ASSERT_EQUAL(ret, max_msg_size / 2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box);
 
@@ -190,13 +190,13 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 
 	/* Push a message of the max possible size : this should work */
 	ret = dynmbox_push(box1, large_msg, large_msg_max_size);
-	CU_ASSERT_EQUAL(ret, large_msg_max_size);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box1);
 
 	/* Push a message of a smaller size */
 	ret = dynmbox_push(box1, large_msg, large_msg_max_size / 2);
-	CU_ASSERT_EQUAL(ret, large_msg_max_size / 2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box1);
 
@@ -215,19 +215,19 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 
 	/* Push a message of the max possible size : this should work */
 	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size);
-	CU_ASSERT_EQUAL(ret, very_large_msg_max_size);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box2);
 
 	/* This should work twice ! */
 	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size);
-	CU_ASSERT_EQUAL(ret, very_large_msg_max_size);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box2);
 
 	/* Push a message of a smaller size */
 	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size / 2);
-	CU_ASSERT_EQUAL(ret, very_large_msg_max_size / 2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	flush_mbox(box2);
 
@@ -242,7 +242,7 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 	/* Push a message of almost the maximum size, leaving just enough room
 	 * in the pipe buffer for the header + one byte */
 	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size - 5);
-	CU_ASSERT_EQUAL(ret, very_large_msg_max_size - 5);
+	CU_ASSERT_EQUAL(ret, 0);
 	/* The buffer has not been read yet, and we try to push a message of
 	 * only 2 bytes, which exceeds the pipe buffer capacity */
 	ret = dynmbox_push(box2, very_large_msg, 2);
@@ -268,7 +268,7 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 
 	/* Push a message of the max possible size : this should work */
 	ret = dynmbox_push(box, msg_sent, max_msg_size);
-	CU_ASSERT_EQUAL(ret, max_msg_size);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	memset(msg_read, 0, SIZEOF_ARRAY(msg_read));
 	ret = dynmbox_peek(box, msg_read);
@@ -280,7 +280,7 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 
 	/* Push a message of a smaller size : this should work */
 	ret = dynmbox_push(box, msg_sent, max_msg_size / 2);
-	CU_ASSERT_EQUAL(ret, max_msg_size / 2);
+	CU_ASSERT_EQUAL(ret, 0);
 
 	memset(msg_read, 0, SIZEOF_ARRAY(msg_read));
 	ret = dynmbox_peek(box, msg_read);
@@ -302,7 +302,7 @@ static int send_and_receive_msg(struct dynmbox *box,
 	unsigned int i;
 
 	ret = dynmbox_push(box, src, msg_size);
-	CU_ASSERT_EQUAL_FATAL(ret, msg_size);
+	CU_ASSERT_EQUAL_FATAL(ret, 0);
 
 	memset(dest, 0, SIZEOF_ARRAY(dest));
 	ret = dynmbox_peek(box, dest);

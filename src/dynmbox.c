@@ -90,13 +90,15 @@ struct dynmbox *dynmbox_new(size_t max_msg_size)
 
 	box->pipe_capacity = fcntl(box->fds[0], F_GETPIPE_SZ, 0);
 	if (box->pipe_capacity  < 0) {
+		close(box->fds[0]);
+		close(box->fds[1]);
 		free(box);
 		return NULL;
 	}
 
 	/* Check the size of the message plus its header against the genuine
 	 * capacity of the pipe */
-	if (max_msg_size + sizeof(int) > (size_t) box->pipe_capacity) {
+	if (max_msg_size + sizeof(size_t) > (size_t) box->pipe_capacity) {
 		close(box->fds[0]);
 		close(box->fds[1]);
 		free(box);
@@ -133,11 +135,11 @@ ssize_t dynmbox_get_max_size(const struct dynmbox *box)
 	return box ? (ssize_t) box->max_msg_size : -EINVAL;
 }
 
-ssize_t dynmbox_push(struct dynmbox *box,
+int dynmbox_push(struct dynmbox *box,
 			 const void *msg,
 			 size_t msg_size)
 {
-	ssize_t ret;
+	int ret;
 	int bytes_in_pipe;
 	/* The message is in two parts : an header containing its size, and
 	 * the payload */
@@ -164,14 +166,7 @@ ssize_t dynmbox_push(struct dynmbox *box,
 		ret = writev(box->fds[1], iov, 2);
 	} while (ret == -1 && errno == EINTR);
 
-	/* Account for the size of the header : the size we return is that of
-	 * the payload, not the total */
-	if (ret < 0)
-		return ret;
-	else if ((size_t) ret < sizeof(msg_size))
-		return -EAGAIN;
-	else
-		return ret - sizeof(msg_size);
+	return ret == (int) (msg_size + sizeof(size_t)) ? 0 : -EAGAIN;
 }
 
 ssize_t dynmbox_peek(struct dynmbox *box, void *msg)

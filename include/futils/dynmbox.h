@@ -48,7 +48,7 @@ extern "C" {
 /* Maximum size of a dynmbox message : this is based on the default pipe
  * capacity of 65536 bytes, which can be modified using the fcntl F_SETPIPE_SZ
  * operation. See pipe(7) for details */
-#define DYNMBOX_MAX_SIZE (65536 - sizeof(int))
+#define DYNMBOX_MAX_SIZE (65536 - sizeof(size_t))
 
 struct dynmbox;
 
@@ -96,14 +96,12 @@ ssize_t dynmbox_get_max_size(const struct dynmbox *box);
  * @param[in] msg The message to send
  * @param[in] msg_size Size of the message to send
  *
- * @return size of what has been written on success (between 0 and the size of
- * the message)
+ * @return 0 if all data was written
  *         -EINVAL in case of invalid arguments,
  *         -EAGAIN if the message box is already full, or if adding the message
- * would overflow the pipe capacity
- *         -EPIPE if the pipe closed
+ * would overflow the pipe capacity, or if the write could not be completed
  */
-ssize_t dynmbox_push(struct dynmbox *box,
+int dynmbox_push(struct dynmbox *box,
 		     const void *msg,
 		     size_t msg_size);
 
