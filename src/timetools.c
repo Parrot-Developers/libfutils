@@ -105,7 +105,7 @@ int time_get_monotonic(struct timespec *out)
 {
 	UINT64 ts;
 
-	if (!ts)
+	if (!out)
 		return -EINVAL;
 
 	AmbaUtility_GetHighResolutionTimeStamp(&ts);
