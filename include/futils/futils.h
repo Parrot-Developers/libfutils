@@ -35,35 +35,51 @@
 /**
  * macro used to retrieve number of element of a static fixed array
  */
-#define SIZEOF_ARRAY(x) (sizeof((x)) / sizeof((x)[0]))
+#define FUTILS_SIZEOF_ARRAY(x) (sizeof((x)) / sizeof((x)[0]))
+
+#ifndef SIZEOF_ARRAY
+#define SIZEOF_ARRAY(x) FUTILS_SIZEOF_ARRAY(x)
+#endif
 
 /**
  * macro used to stringify text
  */
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
+#define FUTILS_STRINGIFY(x) #x
+#define FUTILS_TOSTRING(x) FUTILS_STRINGIFY(x)
+
+#ifndef TOSTRING
+#define TOSTRING(x) FUTILS_TOSTRING(x)
+#endif
 
 /**
  * MIN and MAX macro
  */
-#ifndef MIN
-#define MIN(a, b) \
+#define FUTILS_MIN(a, b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#endif /* MIN */
+
+#ifndef MIN
+#define MIN(a, b) FUTILS_MIN(a, b)
+#endif
+
+#define FUTILS_MAX(a, b) \
+   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 #ifndef MAX
-#define MAX(a, b) \
-   ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-#endif /* MAX */
+#define MAX(a, b) FUTILS_MAX(a, b)
+#endif
 
 /**
  * STATIC_ASSERT() can be used to perform many compile-time assertions:
  * type sizes, etc...
  */
 #ifdef __COVERITY__
-#  define STATIC_ASSERT(x, msg)
+#  define FUTILS_STATIC_ASSERT(x, msg)
 #else
-#  define STATIC_ASSERT(x, msg) typedef char __STATIC_ASSERT__[(x)?1:-1]
+#  define FUTILS_STATIC_ASSERT(x, msg) typedef char __STATIC_ASSERT__[(x)?1:-1]
+#endif
+
+#ifndef STATIC_ASSERT
+#define STATIC_ASSERT(x, msg) FUTILS_STATIC_ASSERT(x, msg)
 #endif
 
 /**

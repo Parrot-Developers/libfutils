@@ -38,11 +38,11 @@ extern "C" {
 
 #include <stddef.h>
 
-#define LIST_POISON1 ((void *)0xDEADBEEF)
-#define LIST_POISON2 ((void *)0xDEADDEAD)
+#define FUTILS_LIST_POISON1 ((void *)0xDEADBEEF)
+#define FUTILS_LIST_POISON2 ((void *)0xDEADDEAD)
 
 /**
- * container_of
+ * FUTILS_CONTAINER_OF
  * cast a member of a structure out to the containing structure
  *
  * @param ptr the pointer to the member.
@@ -50,7 +50,7 @@ extern "C" {
  * @param member the name of the member within the struct.
  * @return base address of member containing structure
  **/
-#define container_of(ptr, type, member)				\
+#define FUTILS_CONTAINER_OF(ptr, type, member)				\
 ({									\
 	const __typeof__(((type *)0)->member) * __mptr = (ptr);		\
 	(type *)((uintptr_t)__mptr - offsetof(type, member));	\
@@ -66,15 +66,15 @@ struct list_node {
 static inline void
 list_node_unref(struct list_node *node)
 {
-	node->next = (struct list_node *)LIST_POISON1;
-	node->prev = (struct list_node *)LIST_POISON2;
+	node->next = (struct list_node *)FUTILS_LIST_POISON1;
+	node->prev = (struct list_node *)FUTILS_LIST_POISON2;
 }
 
 static inline int
 list_node_is_unref(struct list_node *node)
 {
-	return (node->next == (struct list_node *)LIST_POISON1) &&
-	       (node->prev == (struct list_node *)LIST_POISON2);
+	return (node->next == (struct list_node *)FUTILS_LIST_POISON1) &&
+	       (node->prev == (struct list_node *)FUTILS_LIST_POISON2);
 }
 
 static inline int
@@ -195,7 +195,7 @@ list_is_last(const struct list_node *list, const struct list_node *node)
 #define list_head_init(name) { &(name), &(name) }
 
 #define list_entry(ptr, type, member)\
-	container_of(ptr, type, member)
+	FUTILS_CONTAINER_OF(ptr, type, member)
 
 #define list_walk_forward(list, pos)\
 	for (pos = (list)->next; pos != (list); pos = pos->next)
