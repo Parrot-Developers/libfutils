@@ -11,18 +11,23 @@ LOCAL_EXPORT_C_INCLUDES := \
 	$(LOCAL_PATH)/include
 
 LOCAL_SRC_FILES := \
-	src/fdutils.c \
 	src/hash.c \
 	src/timetools.c \
+
+ifneq ("$(TARGET_OS)","windows")
+LOCAL_SRC_FILES += \
+	src/fdutils.c \
 	src/synctools.c \
 	src/systimetools.c \
-	src/mbox.c \
+	src/mbox.c
 
 ifneq ("$(TARGET_OS)","darwin")
 ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
 LOCAL_SRC_FILES += \
 	src/dynmbox.c
 endif
+endif
+
 endif
 
 include $(BUILD_LIBRARY)
