@@ -209,30 +209,30 @@ list_is_last(const struct list_node *list, const struct list_node *node)
 			pos = tmp, tmp = pos->next)
 
 #define list_walk_entry_forward(list, pos, member)			\
-	for (pos = list_entry((list)->next, typeof(*pos), member);	\
+	for (pos = list_entry((list)->next, __typeof__(*pos), member);	\
 		&pos->member != (list);					\
-		pos = list_entry(pos->member.next, typeof(*pos), member))
+		pos = list_entry(pos->member.next, __typeof__(*pos), member))
 
 #define list_walk_entry_backward(list, pos, member)		\
-	for (pos = list_entry((list)->prev, typeof(*pos), member);	\
+	for (pos = list_entry((list)->prev, __typeof__(*pos), member);	\
 		&pos->member != (list);					\
-		pos = list_entry(pos->member.prev, typeof(*pos), member))
+		pos = list_entry(pos->member.prev, __typeof__(*pos), member))
 
 #define list_walk_entry_forward_safe(list, pos, tmp, member)	\
-	for (pos = list_entry((list)->next, typeof(*pos), member),	\
+	for (pos = list_entry((list)->next, __typeof__(*pos), member),	\
 			tmp = list_entry(pos->member.next,		\
-					typeof(*pos), member);		\
+					__typeof__(*pos), member);	\
 		&pos->member != (list);					\
 		pos = tmp, tmp = list_entry(tmp->member.next,	\
-			typeof(*tmp), member))
+			__typeof__(*tmp), member))
 
 #define list_walk_entry_backward_safe(list, pos, tmp, member)	\
-	for (pos = list_entry((list)->prev, typeof(*pos), member),	\
+	for (pos = list_entry((list)->prev, __typeof__(*pos), member),	\
 			tmp = list_entry(pos->member.prev,		\
-			typeof(*pos), member);				\
+			__typeof__(*pos), member);			\
 		&pos->member != (list);					\
 		pos = tmp, tmp = list_entry(tmp->member.prev,	\
-			typeof(*tmp), member))
+			__typeof__(*tmp), member))
 
 
 static inline size_t
