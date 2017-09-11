@@ -100,7 +100,7 @@ int hash_init(struct hash *hash, size_t size)
 	return 0;
 
 error:
-	return 0;
+	return ret;
 }
 
 int hash_remove_all(struct hash *hash)
