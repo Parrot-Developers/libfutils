@@ -194,10 +194,13 @@ int time_system_get_time(uint64_t *unix_usec, int32_t *minuteswest)
 	return 0;
 }
 
-static int time_create_tm(uint64_t unix_usec, int32_t minuteswest,
+int time_system_create_tm(uint64_t unix_usec, int32_t minuteswest,
 		struct tm *tm)
 {
 	time_t unix_sec;
+
+	if (!tm)
+		return -EINVAL;
 
 	unix_sec = unix_usec / US_TO_SEC;
 	if (gmtime_r(&unix_sec, tm) == NULL)
@@ -216,7 +219,7 @@ int time_system_convert_time(uint64_t unix_usec, int32_t minuteswest,
 	size_t ret;
 	struct tm tm;
 
-	res = time_create_tm(unix_usec, minuteswest, &tm);
+	res = time_system_create_tm(unix_usec, minuteswest, &tm);
 	if (res < 0)
 		return res;
 

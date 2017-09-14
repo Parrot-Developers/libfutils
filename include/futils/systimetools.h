@@ -106,8 +106,8 @@ int time_ctx_get_time(struct time_ctx *ctx, uint64_t *time_unix_usec,
  *
  * @param unix_usec Timestamp of the master clock in microseconds since UNIX
  *                  epoch.
- * @param minuteswest Timestamp of the component clock since boot time in
- *                    milliseconds.
+ * @param minuteswest minutes west of Greenwich.
+ *
  * @return 0 on success
  */
 int time_system_set_time(uint64_t unix_usec, int32_t minuteswest);
@@ -117,12 +117,25 @@ int time_system_set_time(uint64_t unix_usec, int32_t minuteswest);
  *
  * @param unix_usec Timestamp of the master clock in microseconds since UNIX
  *                  epoch.
- * @param minuteswest Timestamp of the component clock since boot time in
- *                    milliseconds.
+ * @param minuteswest minutes west of Greenwich.
+ *
  * @return 0 on success
  * @return -EINVAL if at last one parameter is NULL
  */
 int time_system_get_time(uint64_t *unix_usec, int32_t *minuteswest);
+
+/**
+ * @brief Fill a tm struct based on unix_usec & minuteswest
+ *
+ * @param unix_usec Timestamp of the master clock in microseconds since UNIX
+ *                  epoch.
+ * @param minuteswest minutes west of Greenwich.
+ *
+ * @return 0 on success
+ * @return -EINVAL if tm is NULL
+ */
+int time_system_create_tm(uint64_t unix_usec, int32_t minuteswest,
+		struct tm *tm);
 
 /**
  * @brief Get a formated representation of the system time.
