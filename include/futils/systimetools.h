@@ -95,7 +95,7 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour);
  * @return -EINPROGRESS If ctx is not completed
  */
 int time_ctx_get_time(struct time_ctx *ctx, uint64_t *time_unix_usec,
-		uint32_t *minuteswest);
+		int32_t *minuteswest);
 
 /**
  * System time API

@@ -132,7 +132,7 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour)
 }
 
 int time_ctx_get_time(struct time_ctx *ctx, uint64_t *time_unix_usec,
-		uint32_t *minuteswest)
+		int32_t *minuteswest)
 {
 	struct tm tm;
 
@@ -149,7 +149,12 @@ int time_ctx_get_time(struct time_ctx *ctx, uint64_t *time_unix_usec,
 	memcpy(&tm, &ctx->tm, sizeof(tm));
 	*time_unix_usec = (uint64_t) mktime(&tm) * US_TO_SEC;
 
-	*minuteswest = ctx->tm.tm_gmtoff / 60; /* tm_gmtoff unit is seconds */
+	/**
+	 * see ftp://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_21.html#SEC441
+	 * for timezone
+	 * tm_gmtoff unit is Seconds east of UTC
+	 */
+	*minuteswest = -ctx->tm.tm_gmtoff / 60;
 
 	return 0;
 }
@@ -207,7 +212,7 @@ int time_system_create_tm(uint64_t unix_usec, int32_t minuteswest,
 		return -errno;
 
 	/* tm_gmtoff unit is seconds */
-	tm->tm_gmtoff = minuteswest * 60;
+	tm->tm_gmtoff = -minuteswest * 60;
 
 	return 0;
 }
