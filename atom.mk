@@ -6,6 +6,7 @@ LOCAL_MODULE := libfutils
 LOCAL_CATEGORY_PATH := libs
 LOCAL_DESCRIPTION := c utility functions
 LOCAL_LIBRARIES := libulog
+LOCAL_CONDITIONAL_LIBRARIES := OPTIONAL:libputils
 
 LOCAL_EXPORT_C_INCLUDES := \
 	$(LOCAL_PATH)/include

@@ -29,6 +29,7 @@
  *
  ******************************************************************************/
 
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "futils/systimetools.h"
@@ -39,6 +40,11 @@ ULOG_DECLARE_TAG(systimetools);
 
 #define TIME_DATE_FORMAT "%F"
 #define TIME_HOUR_FORMAT "T%H%M%S%z"
+
+#ifdef BUILD_LIBPUTILS
+#include <putils/properties.h>
+#define UTC_OFFSET_PROP_NAME "timezone.utc_offset.sec"
+#endif
 
 #define TIME_FIELD_DATE (1 << 0)
 #define TIME_FIELD_HOUR (1 << 1)
@@ -131,100 +137,154 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour)
 	return ret;
 }
 
-int time_ctx_get_time(struct time_ctx *ctx, uint64_t *time_unix_usec,
-		int32_t *minuteswest)
+/* Return the number of seconds since 1970-01-01 (unix epoch)
+ * of the date given by its year / month / day / hour / min / sec components.
+ * A local timezome UTC offset (+/-) can also be given (0 if not used) */
+static uint64_t time_ctx_mkepoch(struct time_ctx *ctx)
 {
-	struct tm tm;
+	uint64_t time;
+	const uint64_t nb_day_1970 = 719499;
+	const uint64_t cumulative_nb_day_per_month[] = {
+		0, 30, 61, 91, 122, 152, 183, 214, 244, 275, 305, 336, 367
+	};
+	uint32_t year = ctx->tm.tm_year + 1900;
+	uint32_t month = ctx->tm.tm_mon + 1; /* 1 -> 12 */
+	uint32_t day = ctx->tm.tm_mday;      /* 1 -> 31 */
+	uint32_t hour = ctx->tm.tm_hour;     /* 0 -> 23 */
+	uint32_t min = ctx->tm.tm_min;       /* 0 -> 59 */
+	uint32_t sec = ctx->tm.tm_sec;	     /* 0 -> 59 */
+	int32_t utc_offset_sec = ctx->tm.tm_gmtoff;
 
-	if (!ctx || !time_unix_usec || !minuteswest)
+	if (!ctx)
+		return 0;
+
+	/* Shift the given date two months back in order to have february
+	 * (and especially its leap day) at the end of the shifted year
+	 * to simplify future calculations.
+	 * january is now 11 / february is now 12 / march is now 1 / ... */
+	month -= 2;
+	if ((int)month <= 0) {
+		month += 12;
+		year -= 1;
+	}
+
+	/* Add the number of leap days between year 0 and the given year,
+	 * the formula comes from the gregorian calendar leap years rule */
+	time = year/4 - year/100 + year/400;
+
+	/* Handle years / months / days */
+	time += year * 365;
+	time += cumulative_nb_day_per_month[month];
+	time += day;
+
+	/* Shift origin from 0 to 1970 */
+	time -= nb_day_1970;
+
+	/* Handle hours / minutes / seconds */
+	time = (time * 24) + hour;
+	time = (time * 60) + min;
+	time = (time * 60) + sec;
+
+	/* Shift time with the timezone offset from UTC */
+	time -= utc_offset_sec;
+
+	return time;
+}
+
+int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
+		int32_t *utc_offset_sec)
+{
+	if (!ctx || !epoch_sec || !utc_offset_sec)
 		return -EINVAL;
 
 	if (ctx->fields != TIME_FIELD_ALL)
 		return -EINPROGRESS;
 
-	/*
-	 * mktime() change the value of its parameter, we need to work on a
-	 * copy to avoid problems.
-	 */
-	memcpy(&tm, &ctx->tm, sizeof(tm));
-	*time_unix_usec = (uint64_t) mktime(&tm) * US_TO_SEC;
-
-	/**
-	 * see ftp://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_21.html#SEC441
-	 * for timezone
-	 * tm_gmtoff unit is Seconds east of UTC
-	 */
-	*minuteswest = -ctx->tm.tm_gmtoff / 60;
+	*epoch_sec = time_ctx_mkepoch(ctx);
+	*utc_offset_sec = ctx->tm.tm_gmtoff;
 
 	return 0;
 }
 
-int time_system_set_time(uint64_t unix_usec, int32_t minuteswest)
+int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec)
 {
 	struct timeval tv;
-	struct timezone tz;
 	int ret;
 
 	memset(&tv, 0, sizeof(tv));
-	memset(&tz, 0, sizeof(tz));
 
-	tv.tv_sec = unix_usec / US_TO_SEC;
-	tv.tv_usec = unix_usec % US_TO_SEC;
+	tv.tv_sec = epoch_sec;
 
-	tz.tz_minuteswest = minuteswest;
+#ifdef BUILD_LIBPUTILS
+	/* utc offset */
+	char value[SYS_PROP_VALUE_MAX];
+	snprintf(value, sizeof(value), "%d", utc_offset_sec);
+	ret = sys_prop_set(UTC_OFFSET_PROP_NAME, value);
+	if (ret < 0)
+		return ret;
+#endif
 
-	ret = settimeofday(&tv, &tz);
+	ret = settimeofday(&tv, NULL);
 	if (ret < 0)
 		return -errno;
 
 	return 0;
 }
 
-int time_system_get_time(uint64_t *unix_usec, int32_t *minuteswest)
+int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec)
 {
 	struct timeval tv;
-	struct timezone tz;
 	int ret;
 
-	if (!unix_usec || !minuteswest)
+	if (!epoch_sec)
 		return -EINVAL;
 
-	ret = gettimeofday(&tv, &tz);
+	ret = gettimeofday(&tv, NULL);
 	if (ret < 0)
 		return -errno;
 
-	*unix_usec = tv.tv_usec;
-	*unix_usec += (uint64_t) tv.tv_sec * US_TO_SEC;
-	*minuteswest = tz.tz_minuteswest;
+	*epoch_sec = tv.tv_sec;
+
+	if (!utc_offset_sec)
+		return 0;
+
+	*utc_offset_sec = 0;
+
+#ifdef BUILD_LIBPUTILS
+	/* get the current timezone utc offset from property */
+	char prop[SYS_PROP_VALUE_MAX];
+	sys_prop_get(UTC_OFFSET_PROP_NAME, prop, "0");
+	*utc_offset_sec = strtol(prop, NULL, 10);
+#endif
+
 	return 0;
 }
 
-int time_system_create_tm(uint64_t unix_usec, int32_t minuteswest,
+int time_local_create_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 		struct tm *tm)
 {
-	time_t unix_sec;
-
 	if (!tm)
 		return -EINVAL;
 
-	unix_sec = unix_usec / US_TO_SEC;
-	if (gmtime_r(&unix_sec, tm) == NULL)
+	if (gmtime_r((time_t *)&epoch_sec, tm) == NULL)
 		return -errno;
 
-	/* tm_gmtoff unit is seconds */
-	tm->tm_gmtoff = -minuteswest * 60;
+	tm->tm_gmtoff = utc_offset_sec;
 
 	return 0;
 }
 
-int time_system_convert_time(uint64_t unix_usec, int32_t minuteswest,
+int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 		char *date, size_t datesize, char *hour, size_t hoursize)
 {
 	int res;
 	size_t ret;
 	struct tm tm;
 
-	res = time_system_create_tm(unix_usec, minuteswest, &tm);
+	/* convert epoch_sec to local time */
+	epoch_sec += utc_offset_sec;
+
+	res = time_local_create_tm(epoch_sec, utc_offset_sec, &tm);
 	if (res < 0)
 		return res;
 

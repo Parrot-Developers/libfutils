@@ -89,56 +89,68 @@ int time_ctx_set_date(struct time_ctx *ctx, const char *str_date);
 int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour);
 
 /**
- * @brief Get the stored time
+ * @brief Get the stored local time
+ *
+ * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
  *
  * @return 0 If ctx contains a valid time
  * @return -EINPROGRESS If ctx is not completed
  */
-int time_ctx_get_time(struct time_ctx *ctx, uint64_t *time_unix_usec,
-		int32_t *minuteswest);
+int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
+		int32_t *utc_offset_sec);
 
 /**
  * System time API
  */
 
 /**
- * @brief Set the time of the system
+ * @brief Set the local time of the system
+ *        The system time is changed to epoch_sec (UTC)
  *
- * @param unix_usec Timestamp of the master clock in microseconds since UNIX
- *                  epoch.
- * @param minuteswest minutes west of Greenwich.
+ *        + if build with libputils:
+ *        	the utc_offset_sec is saved in a boxinit property
+ *        + if no build with libputils:
+ *        	the utc_offset_sec is ignored and will be considered 0
+ *
+ * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
  *
  * @return 0 on success
  */
-int time_system_set_time(uint64_t unix_usec, int32_t minuteswest);
+int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec);
 
 /**
- * @brief Get the time of the system
+ * @brief Get the local time of the system
+ * 	  epoch_sec will be retrived from the current system time (UTC)
  *
- * @param unix_usec Timestamp of the master clock in microseconds since UNIX
- *                  epoch.
- * @param minuteswest minutes west of Greenwich.
+ * 	  + if build with libputils:
+ * 	  	the utc_offset_sec will be retrieved from the boxinit property
+ * 	  + if no build with libputils:
+ * 	  	utc_offset_sec will be 0
+ *
+ * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
  *
  * @return 0 on success
  * @return -EINVAL if at last one parameter is NULL
  */
-int time_system_get_time(uint64_t *unix_usec, int32_t *minuteswest);
+int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec);
 
 /**
  * @brief Fill a tm struct based on unix_usec & minuteswest
  *
- * @param unix_usec Timestamp of the master clock in microseconds since UNIX
- *                  epoch.
- * @param minuteswest minutes west of Greenwich.
+ * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
  *
  * @return 0 on success
  * @return -EINVAL if tm is NULL
  */
-int time_system_create_tm(uint64_t unix_usec, int32_t minuteswest,
+int time_local_create_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 		struct tm *tm);
 
 /**
- * @brief Get a formated representation of the system time.
+ * @brief Get a formated representation of the local time.
  *
  * @param date The string that will contain the formated date
  * @param datesize Max size of date
@@ -146,7 +158,7 @@ int time_system_create_tm(uint64_t unix_usec, int32_t minuteswest,
  * @param hoursize Max size of hour
  * @return 0 If both strings have been filled
  */
-int time_system_convert_time(uint64_t unix_usec, int32_t minuteswest,
+int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 		char *date, size_t datesize, char *hour, size_t hoursize);
 
 #ifdef __cplusplus
