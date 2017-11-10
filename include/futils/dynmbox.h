@@ -41,6 +41,8 @@
 #ifndef __DYNMBOX_H__
 #define __DYNMBOX_H__
 
+#include <unistd.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
