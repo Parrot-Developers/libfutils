@@ -276,6 +276,9 @@ int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 	if (!tm)
 		return -EINVAL;
 
+	/* convert epoch_sec to local time */
+	epoch_sec += utc_offset_sec;
+
 	if (gmtime_r((time_t *)&epoch_sec, tm) == NULL)
 		return -errno;
 
@@ -290,9 +293,6 @@ int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 	int res;
 	size_t ret;
 	struct tm tm;
-
-	/* convert epoch_sec to local time */
-	epoch_sec += utc_offset_sec;
 
 	res = time_local_to_tm(epoch_sec, utc_offset_sec, &tm);
 	if (res < 0)
