@@ -245,14 +245,15 @@ int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec)
 	struct timeval tv;
 	int ret;
 
-	if (!epoch_sec)
+	if (!epoch_sec && !utc_offset_sec)
 		return -EINVAL;
 
 	ret = gettimeofday(&tv, NULL);
 	if (ret < 0)
 		return -errno;
 
-	*epoch_sec = tv.tv_sec;
+	if (epoch_sec)
+		*epoch_sec = tv.tv_sec;
 
 	if (!utc_offset_sec)
 		return 0;
