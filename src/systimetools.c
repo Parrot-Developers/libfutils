@@ -147,6 +147,10 @@ static uint64_t time_ctx_mkepoch(struct time_ctx *ctx)
 	const uint64_t cumulative_nb_day_per_month[] = {
 		0, 30, 61, 91, 122, 152, 183, 214, 244, 275, 305, 336, 367
 	};
+
+	if (!ctx)
+		return 0;
+
 	uint32_t year = ctx->tm.tm_year + 1900;
 	uint32_t month = ctx->tm.tm_mon + 1; /* 1 -> 12 */
 	uint32_t day = ctx->tm.tm_mday;      /* 1 -> 31 */
@@ -154,9 +158,6 @@ static uint64_t time_ctx_mkepoch(struct time_ctx *ctx)
 	uint32_t min = ctx->tm.tm_min;       /* 0 -> 59 */
 	uint32_t sec = ctx->tm.tm_sec;	     /* 0 -> 59 */
 	int32_t utc_offset_sec = ctx->tm.tm_gmtoff;
-
-	if (!ctx)
-		return 0;
 
 	/* Shift the given date two months back in order to have february
 	 * (and especially its leap day) at the end of the shifted year
