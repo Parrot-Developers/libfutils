@@ -138,7 +138,7 @@ int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec);
 int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec);
 
 /**
- * @brief Fill a tm struct based on unix_usec & minuteswest
+ * @brief Fill a tm struct based on epoch_sec and utc_offset_sec
  *
  * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
  * @param utc_offset_sec Offset in seconds from UTC
