@@ -146,7 +146,7 @@ int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec);
  * @return 0 on success
  * @return -EINVAL if tm is NULL
  */
-int time_local_create_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
+int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 		struct tm *tm);
 
 /**

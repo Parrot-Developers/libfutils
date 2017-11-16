@@ -270,7 +270,7 @@ int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec)
 	return 0;
 }
 
-int time_local_create_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
+int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 		struct tm *tm)
 {
 	if (!tm)
@@ -294,7 +294,7 @@ int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 	/* convert epoch_sec to local time */
 	epoch_sec += utc_offset_sec;
 
-	res = time_local_create_tm(epoch_sec, utc_offset_sec, &tm);
+	res = time_local_to_tm(epoch_sec, utc_offset_sec, &tm);
 	if (res < 0)
 		return res;
 
