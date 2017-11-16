@@ -140,7 +140,7 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour)
 /* Return the number of seconds since 1970-01-01 (unix epoch)
  * of the date given by its year / month / day / hour / min / sec components.
  * A local timezome UTC offset (+/-) can also be given (0 if not used) */
-static uint64_t tm_mkepoch(const struct tm *tm)
+static uint64_t tm_mkepoch_local(const struct tm *tm)
 {
 	uint64_t time;
 	const uint64_t nb_day_1970 = 719499;
@@ -192,12 +192,12 @@ static uint64_t tm_mkepoch(const struct tm *tm)
 	return time;
 }
 
-static uint64_t time_ctx_mkepoch(const struct time_ctx *ctx)
+static uint64_t time_ctx_mkepoch_local(const struct time_ctx *ctx)
 {
 	if (!ctx)
 		return 0;
 
-	return tm_mkepoch(&ctx->tm);
+	return tm_mkepoch_local(&ctx->tm);
 }
 
 int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
@@ -209,7 +209,7 @@ int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
 	if (ctx->fields != TIME_FIELD_ALL)
 		return -EINPROGRESS;
 
-	*epoch_sec = time_ctx_mkepoch(ctx);
+	*epoch_sec = time_ctx_mkepoch_local(ctx);
 	*utc_offset_sec = ctx->tm.tm_gmtoff;
 
 	return 0;
