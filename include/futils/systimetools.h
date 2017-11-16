@@ -150,6 +150,18 @@ int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 		struct tm *tm);
 
 /**
+ * @brief Get local time contained in a tm struct as (epoch_sec/utc_offset_sec)
+ *
+ * @param tm             The tm struct containing the local time
+ * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
+ *
+ * @return 0 in case of success, negative errno value in case of error
+ */
+int time_local_from_tm(const struct tm *tm, uint64_t *epoch_sec,
+		int32_t *utc_offset_sec);
+
+/**
  * @brief Get a formated representation of the local time.
  *
  * @param date The string that will contain the formated date

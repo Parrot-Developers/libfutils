@@ -287,6 +287,24 @@ int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 	return 0;
 }
 
+int time_local_from_tm(const struct tm *tm, uint64_t *epoch_sec,
+		int32_t *utc_offset_sec)
+{
+	if (!tm)
+		return -EINVAL;
+
+	if (!epoch_sec && !utc_offset_sec)
+		return -EINVAL;
+
+	if (epoch_sec)
+		*epoch_sec = tm_mkepoch_local(tm);
+
+	if (utc_offset_sec)
+		*utc_offset_sec = tm->tm_gmtoff;
+
+	return 0;
+}
+
 int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 		char *date, size_t datesize, char *hour, size_t hoursize)
 {
