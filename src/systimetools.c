@@ -140,7 +140,7 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour)
 /* Return the number of seconds since 1970-01-01 (unix epoch)
  * of the date given by its year / month / day / hour / min / sec components.
  * A local timezome UTC offset (+/-) can also be given (0 if not used) */
-static uint64_t time_ctx_mkepoch(struct time_ctx *ctx)
+static uint64_t time_ctx_mkepoch(const struct time_ctx *ctx)
 {
 	uint64_t time;
 	const uint64_t nb_day_1970 = 719499;
