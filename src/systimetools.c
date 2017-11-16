@@ -140,7 +140,7 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour)
 /* Return the number of seconds since 1970-01-01 (unix epoch)
  * of the date given by its year / month / day / hour / min / sec components.
  * A local timezome UTC offset (+/-) can also be given (0 if not used) */
-static uint64_t time_ctx_mkepoch(const struct time_ctx *ctx)
+static uint64_t tm_mkepoch(const struct tm *tm)
 {
 	uint64_t time;
 	const uint64_t nb_day_1970 = 719499;
@@ -148,16 +148,16 @@ static uint64_t time_ctx_mkepoch(const struct time_ctx *ctx)
 		0, 30, 61, 91, 122, 152, 183, 214, 244, 275, 305, 336, 367
 	};
 
-	if (!ctx)
+	if (!tm)
 		return 0;
 
-	uint32_t year = ctx->tm.tm_year + 1900;
-	uint32_t month = ctx->tm.tm_mon + 1; /* 1 -> 12 */
-	uint32_t day = ctx->tm.tm_mday;      /* 1 -> 31 */
-	uint32_t hour = ctx->tm.tm_hour;     /* 0 -> 23 */
-	uint32_t min = ctx->tm.tm_min;       /* 0 -> 59 */
-	uint32_t sec = ctx->tm.tm_sec;	     /* 0 -> 59 */
-	int32_t utc_offset_sec = ctx->tm.tm_gmtoff;
+	uint32_t year = tm->tm_year + 1900;
+	uint32_t month = tm->tm_mon + 1; /* 1 -> 12 */
+	uint32_t day = tm->tm_mday;      /* 1 -> 31 */
+	uint32_t hour = tm->tm_hour;     /* 0 -> 23 */
+	uint32_t min = tm->tm_min;       /* 0 -> 59 */
+	uint32_t sec = tm->tm_sec;	     /* 0 -> 59 */
+	int32_t utc_offset_sec = tm->tm_gmtoff;
 
 	/* Shift the given date two months back in order to have february
 	 * (and especially its leap day) at the end of the shifted year
@@ -190,6 +190,14 @@ static uint64_t time_ctx_mkepoch(const struct time_ctx *ctx)
 	time -= utc_offset_sec;
 
 	return time;
+}
+
+static uint64_t time_ctx_mkepoch(const struct time_ctx *ctx)
+{
+	if (!ctx)
+		return 0;
+
+	return tm_mkepoch(&ctx->tm);
 }
 
 int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
