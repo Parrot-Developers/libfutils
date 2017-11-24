@@ -40,6 +40,7 @@ ULOG_DECLARE_TAG(systimetools);
 
 #define TIME_DATE_FORMAT "%F"
 #define TIME_HOUR_FORMAT "T%H%M%S%z"
+#define TIME_DATETIME_FORMAT "%Y%m%dT%H%M%S%z"
 
 #ifdef BUILD_LIBPUTILS
 #include <putils/properties.h>
@@ -135,6 +136,28 @@ int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour)
 		ret = -EINPROGRESS;
 
 	return ret;
+}
+
+int time_ctx_set_time(struct time_ctx *ctx, const char *str_time)
+{
+	char *enddate;
+
+	if (!ctx || !str_time)
+		return -EINVAL;
+
+	/* Avoid to set the field twice */
+	if (ctx->fields & TIME_FIELD_ALL)
+		return -EEXIST;
+
+	/* Parse date */
+	enddate = strptime(str_time, TIME_DATETIME_FORMAT, &ctx->tm);
+
+	/* Reject invalid dates */
+	if (enddate == NULL || *enddate != '\0')
+		return -EINVAL;
+
+	ctx->fields = TIME_FIELD_ALL;
+	return 0;
 }
 
 /* Return the number of seconds since 1970-01-01 (unix epoch)

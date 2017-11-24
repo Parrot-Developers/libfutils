@@ -89,6 +89,16 @@ int time_ctx_set_date(struct time_ctx *ctx, const char *str_date);
 int time_ctx_set_hour(struct time_ctx *ctx, const char *str_hour);
 
 /**
+ * @brief Set the time of the system
+ *
+ * @return 0 Both date and hour have been configured. The system has been
+ *           configured.
+ * @return -EINVAL Invalid parameter
+ * @return -EEXIST The time has already been set
+ */
+int time_ctx_set_time(struct time_ctx *ctx, const char *str_time);
+
+/**
  * @brief Get the stored local time
  *
  * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
