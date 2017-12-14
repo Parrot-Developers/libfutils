@@ -68,6 +68,14 @@
 #define MAX(a, b) FUTILS_MAX(a, b)
 #endif
 
+#define FUTILS_BOUND(a, m, M) \
+   ({ __typeof__ (a) _a = (a); __typeof__ (m) _m = (m); \
+		__typeof__ (M) _M = (M); _a < _m ? _m : _a > _M ? _M : _a; })
+
+#ifndef BOUND
+#define BOUND(a, m, M) FUTILS_BOUND(a, m, M)
+#endif
+
 /**
  * STATIC_ASSERT() can be used to perform many compile-time assertions:
  * type sizes, etc...

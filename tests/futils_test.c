@@ -30,11 +30,32 @@
  */
 
 #include "futils_test.h"
+#include "futils/futils.h"
 #include "stdlib.h"
 
 extern CU_TestInfo s_dynmbox_tests[];
 
+static void test_bound(void)
+{
+	uint32_t value = 10;
+	uint32_t min = 5;
+	uint32_t max = 20;
+	CU_ASSERT_EQUAL(value, BOUND(value, min, max));
+
+	value = 0;
+	CU_ASSERT_EQUAL(min, BOUND(value, min, max));
+
+	value = 30;
+	CU_ASSERT_EQUAL(max, BOUND(value, min, max));
+}
+
+CU_TestInfo s_futils_tests[] = {
+	{(char *)"futils bound", &test_bound},
+	CU_TEST_INFO_NULL,
+};
+
 static CU_SuiteInfo s_suites[] = {
+	{(char *)"futils", NULL, NULL, s_futils_tests},
 	{(char *)"dynmbox", NULL, NULL, s_dynmbox_tests},
 	CU_SUITE_INFO_NULL,
 };
