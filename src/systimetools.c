@@ -265,6 +265,12 @@ int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec)
 
 int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec)
 {
+	return time_local_ms_get(epoch_sec, NULL, utc_offset_sec);
+}
+
+int time_local_ms_get(uint64_t *epoch_sec, uint16_t *ms,
+		int32_t *utc_offset_sec)
+{
 	struct timeval tv;
 	int ret;
 
@@ -277,6 +283,9 @@ int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec)
 
 	if (epoch_sec)
 		*epoch_sec = tv.tv_sec;
+
+	if (ms)
+		*ms = tv.tv_usec / 1000;
 
 	if (!utc_offset_sec)
 		return 0;
