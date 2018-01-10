@@ -15,6 +15,11 @@ LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/timetools.c \
 
+ifeq ("$(TARGET_OS)", "linux")
+LOCAL_SRC_FILES += \
+	src/inotify.c
+endif
+
 ifneq ("$(TARGET_OS)","windows")
 LOCAL_SRC_FILES += \
 	src/fdutils.c \
