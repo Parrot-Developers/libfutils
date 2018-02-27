@@ -168,10 +168,6 @@ static void test_dynmbox_push_smaller_than_pipe_buf(void)
 	ret = dynmbox_push(box, msg, max_msg_size * 2);
 	CU_ASSERT_EQUAL(ret, -EINVAL);
 
-	/* Push a message of null size */
-	ret = dynmbox_push(box, msg, 0);
-	CU_ASSERT_EQUAL(ret, -EINVAL);
-
 	dynmbox_destroy(box);
 }
 
@@ -204,10 +200,6 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 	ret = dynmbox_push(box1, large_msg, large_msg_max_size * 2);
 	CU_ASSERT_EQUAL(ret, -EINVAL);
 
-	/* Push a message of null size */
-	ret = dynmbox_push(box1, large_msg, 0);
-	CU_ASSERT_EQUAL(ret, -EINVAL);
-
 	/* Create a box with a size way larger than PIPE_BUF */
 	CU_ASSERT_TRUE_FATAL(large_msg_max_size > PIPE_BUF);
 	box2 = dynmbox_new(very_large_msg_max_size);
@@ -233,10 +225,6 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 
 	/* Push a message of a larger size */
 	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size * 2);
-	CU_ASSERT_EQUAL(ret, -EINVAL);
-
-	/* Push a message of null size */
-	ret = dynmbox_push(box2, very_large_msg, 0);
 	CU_ASSERT_EQUAL(ret, -EINVAL);
 
 	/* Push a message of almost the maximum size, leaving just enough room
@@ -380,6 +368,23 @@ static void test_dynmbox_peek_maximum_size(void)
 	dynmbox_destroy(box);
 }
 
+static void test_dynmbox_peek_empty_message(void)
+{
+	struct dynmbox *box;
+	int error;
+	char msg_read[2 * PIPE_BUF];
+
+	/* Create a box with a size of PIPE_BUF */
+	box = dynmbox_new(PIPE_BUF);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(box);
+
+	/* send empty message and check that read size is 0 */
+	error = send_and_receive_msg(box, NULL, msg_read, 0);
+	CU_ASSERT_EQUAL(error, 0);
+
+	dynmbox_destroy(box);
+}
+
 CU_TestInfo s_dynmbox_tests[] = {
 	{(char *)"dynmbox creation", &test_dynmbox_creation},
 	{(char *)"dynmbox get read fd", &test_dynmbox_get_read_fd},
@@ -394,5 +399,7 @@ CU_TestInfo s_dynmbox_tests[] = {
 		&test_dynmbox_peek_larger_than_pipe_buf},
 	{(char *)"dynmbox peek at maximum size",
 		&test_dynmbox_peek_maximum_size},
+	{(char *)"dynmbox peek empty message",
+		&test_dynmbox_peek_empty_message},
 	CU_TEST_INFO_NULL,
 };

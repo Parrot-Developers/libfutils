@@ -148,7 +148,7 @@ int dynmbox_push(struct dynmbox *box,
 		{ .iov_base = (void *) msg, .iov_len = msg_size }
 	};
 
-	if (!msg || !box || msg_size == 0 || msg_size > box->max_msg_size)
+	if (!box || msg_size > box->max_msg_size || (msg_size > 0 && !msg))
 		return -EINVAL;
 
 	ret = ioctl(box->fds[1], FIONREAD, &bytes_in_pipe);
@@ -163,7 +163,7 @@ int dynmbox_push(struct dynmbox *box,
 		return -EAGAIN;
 
 	do {
-		ret = writev(box->fds[1], iov, 2);
+		ret = writev(box->fds[1], iov, (msg_size == 0) ? 1 : 2);
 	} while (ret == -1 && errno == EINTR);
 
 	return ret == (int) (msg_size + sizeof(size_t)) ? 0 : -EAGAIN;
@@ -183,6 +183,10 @@ ssize_t dynmbox_peek(struct dynmbox *box, void *msg)
 	if (ret < 0)
 		return ret;
 
+	if (to_read == 0) {
+		/* message size is 0, do not read further */
+		return 0;
+	}
 	/* Read the whole message */
 	return read_no_eintr(box->fds[0], msg, to_read);
 }
