@@ -31,6 +31,8 @@
 
 #include "futils_test.h"
 
+#ifndef __MINGW32__
+
 /* This function is used to flush the dynmbox contents in tests where there's
  * only a producer */
 static ssize_t flush_mbox(struct dynmbox *box)
@@ -403,3 +405,11 @@ CU_TestInfo s_dynmbox_tests[] = {
 		&test_dynmbox_peek_empty_message},
 	CU_TEST_INFO_NULL,
 };
+
+#else
+
+CU_TestInfo s_dynmbox_tests[] = {
+	CU_TEST_INFO_NULL,
+};
+
+#endif

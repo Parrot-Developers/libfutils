@@ -56,6 +56,7 @@ extern "C" {
 struct time_ctx {
 	int fields;
 	struct tm tm; /* tm.tm_isdst is ignored */
+	int gmtoff;   /* for systems where it is not present in struct tm */
 };
 
 /**
@@ -187,17 +188,36 @@ int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 int time_local_from_tm(const struct tm *tm, uint64_t *epoch_sec,
 		int32_t *utc_offset_sec);
 
+/* Time format for string representation */
+enum time_fmt {
+	TIME_FMT_SHORT,	/* 20180301T014814-1025 */
+	TIME_FMT_LONG,	/* 2018-03-01T01:48:14-10:25 */
+};
+
 /**
- * @brief Get a formated representation of the local time.
+ * @brief Get a formated representation of the local time (ISO_8601).
  *
- * @param date The string that will contain the formated date
- * @param datesize Max size of date
- * @param hour The string that will contain the formated hour
- * @param hoursize Max size of hour
- * @return 0 If both strings have been filled
+ * @param epoch_sec Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
+ * @param fmt format to use (short or long)
+ * @param s The string that will contain the formated date
+ * @param n Max size of string
+ *
+ * @return 0 in case of success, negative errno value in case of error
  */
 int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
-		char *date, size_t datesize, char *hour, size_t hoursize);
+		enum time_fmt fmt, char *s, size_t n);
+
+/**
+ * @brief Parse a formated representation of the local time.
+ * @param s date/time as a string (ISO_8601 sohort or long)
+ * @param epoch_sec Number of seconds since january 1st 1970 00:00 UTC
+ * @param utc_offset_sec Offset in seconds from UTC
+ *
+ * @return 0 in case of success, negative errno value in case of error
+ */
+int time_local_parse(const char *s, uint64_t *epoch_sec,
+	int32_t *utc_offset_sec);
 
 #ifdef __cplusplus
 }

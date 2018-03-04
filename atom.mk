@@ -13,6 +13,7 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 LOCAL_SRC_FILES := \
 	src/hash.c \
+	src/systimetools.c \
 	src/timetools.c \
 
 ifeq ("$(TARGET_OS)", "linux")
@@ -24,7 +25,6 @@ ifneq ("$(TARGET_OS)","windows")
 LOCAL_SRC_FILES += \
 	src/fdutils.c \
 	src/synctools.c \
-	src/systimetools.c \
 	src/mbox.c
 
 ifneq ("$(TARGET_OS)","darwin")
@@ -45,7 +45,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := tst-libfutils
 LOCAL_SRC_FILES := \
 	tests/futils_test.c \
-	tests/futils_test_dynmbox.c
+	tests/futils_test_dynmbox.c \
+	tests/futils_test_systimetools.c
 
 LOCAL_LIBRARIES := libfutils libcunit
 
