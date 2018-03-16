@@ -329,6 +329,8 @@ int time_ctx_set_time(struct time_ctx *ctx, const char *str_time)
 			&ctx->gmtoff);
 	if (ret < 0)
 		return ret;
+	ctx->tm.tm_year -= 1900;
+	ctx->tm.tm_mon -= 1;
 
 	ctx->fields = TIME_FIELD_ALL;
 	return 0;
