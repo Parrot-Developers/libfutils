@@ -193,6 +193,14 @@ static int parse_time(const char *s, size_t n,
 		gmtoff_min_s[0] = s[3];
 		gmtoff_min_s[1] = s[4];
 		gmtoff_min_s[2] = '\0';
+	} else if (n == 1 && (s[0] == 'Z')) {
+		gmtoff_sign = 1;
+		gmtoff_hour_s[0] = '0';
+		gmtoff_hour_s[1] = '0';
+		gmtoff_hour_s[2] = '\0';
+		gmtoff_min_s[0] = '0';
+		gmtoff_min_s[1] = '0';
+		gmtoff_min_s[2] = '\0';
 	} else {
 		return -EINVAL;
 	}

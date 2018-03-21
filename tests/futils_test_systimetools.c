@@ -86,6 +86,7 @@ static void test_systimetools_parse(void)
 		{ "2018-03-02T14:12:13+00:00", 0, 1519999933, 0 },
 		{ "2018-03-03T00:12:13+10:00", 0, 1519999933, 36000 },
 
+		{ "1970-01-01T00:21:49Z", 0, 1309, 0 },
 
 		{ "2018-03-02t14:12:13+00:00", -EINVAL, 0, 0 },
 		{ "2018-03-02T14:12:13+00;00", -EINVAL, 0, 0 },
@@ -134,7 +135,7 @@ static void test_systimetools_format(void)
 		const struct time_format_data *data = &time_data[i];
 
 		memset(s, 0, sizeof(s));
-		ret = time_local_format2(data->epoch_sec, data->utc_off_sec,
+		ret = time_local_format(data->epoch_sec, data->utc_off_sec,
 				data->fmt, s, sizeof(s));
 		CU_ASSERT_EQUAL(ret, 0);
 		CU_ASSERT_STRING_EQUAL(s, data->s);
