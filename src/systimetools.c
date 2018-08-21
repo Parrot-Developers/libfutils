@@ -52,6 +52,34 @@ ULOG_DECLARE_TAG(systimetools);
 #define TIME_FIELD_HOUR (1 << 1)
 #define TIME_FIELD_ALL (TIME_FIELD_DATE|TIME_FIELD_HOUR)
 
+
+static const char *wday_str[7] = {
+	"Sun",
+	"Mon",
+	"Tue",
+	"Wed",
+	"Thu",
+	"Fri",
+	"Sat",
+};
+
+
+static const char *mon_str[12] = {
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+};
+
+
 static int parse_num(const char *s, int *num)
 {
 	char *end = NULL;
@@ -60,6 +88,33 @@ static int parse_num(const char *s, int *num)
 	return (end == NULL || *end != '\0') ? -EINVAL : -errno;
 }
 
+static int parse_wday(const char *s, int *num)
+{
+	int i, ret = -ENOENT;
+	for (i = 0; i < 7; i++) {
+		if (strncmp(s, wday_str[i], 3) == 0) {
+			if (num)
+				*num = i;
+			ret = 0;
+			break;
+		}
+	}
+	return ret;
+}
+
+static int parse_mon(const char *s, int *num)
+{
+	int i, ret = -ENOENT;
+	for (i = 0; i < 12; i++) {
+		if (strncmp(s, mon_str[i], 3) == 0) {
+			if (num)
+				*num = i + 1;
+			ret = 0;
+			break;
+		}
+	}
+	return ret;
+}
 
 /*
  * YYYY-MM-DD
@@ -109,6 +164,58 @@ static int parse_date(const char *s, size_t n, int *year, int *mon, int *mday)
 		return ret;
 
 	return ret;
+}
+
+/*
+ * aaa, DD bbb YYYY
+ */
+static int parse_date_rfc1123(const char *s, size_t n,
+		int *year, int *mon, int *mday)
+{
+	int ret, offset = 0;
+	char year_s[5], mon_s[4], mday_s[3], wday_s[4];
+
+	if (s[3] != ',')
+		return -EINVAL;
+
+	wday_s[0] = s[offset++];
+	wday_s[1] = s[offset++];
+	wday_s[2] = s[offset++];
+	wday_s[3] = '\0';
+	offset += 2;
+	mday_s[0] = s[offset++];
+	if (s[offset] == ' ') {
+		/* 1 digit month day (eg. '5') */
+		mday_s[1] = '\0';
+		mday_s[2] = '\0';
+	} else {
+		/* 2 digit month day, including leading 0 (eg. '05' or '23') */
+		mday_s[1] = s[offset++];
+		mday_s[2] = '\0';
+	}
+	offset++;
+	mon_s[0] = s[offset++];
+	mon_s[1] = s[offset++];
+	mon_s[2] = s[offset++];
+	mon_s[3] = '\0';
+	offset++;
+	year_s[0] = s[offset++];
+	year_s[1] = s[offset++];
+	year_s[2] = s[offset++];
+	year_s[3] = s[offset++];
+	year_s[4] = '\0';
+
+	ret = parse_num(year_s, year);
+	if (ret < 0)
+		return ret;
+	ret = parse_mon(mon_s, mon);
+	if (ret < 0)
+		return ret;
+	ret = parse_num(mday_s, mday);
+	if (ret < 0)
+		return ret;
+
+	return offset;
 }
 
 /*
@@ -175,6 +282,12 @@ static int parse_time(const char *s, size_t n,
 	if (ret < 0)
 		return ret;
 
+	/* Skip space if needed */
+	if (n > 0 && s[0] == ' ') {
+		s++;
+		n--;
+	}
+
 	/* Determine time zome format (independently from time in case there
 	 * is a mix of short/long */
 	if (n == 6 && (s[0] == '-' || s[0] == '+') && s[3] == ':') {
@@ -194,6 +307,14 @@ static int parse_time(const char *s, size_t n,
 		gmtoff_min_s[1] = s[4];
 		gmtoff_min_s[2] = '\0';
 	} else if (n == 1 && (s[0] == 'Z')) {
+		gmtoff_sign = 1;
+		gmtoff_hour_s[0] = '0';
+		gmtoff_hour_s[1] = '0';
+		gmtoff_hour_s[2] = '\0';
+		gmtoff_min_s[0] = '0';
+		gmtoff_min_s[1] = '0';
+		gmtoff_min_s[2] = '\0';
+	} else if (n == 3 && (s[0] == 'G') && (s[1] == 'M') && (s[2] == 'T')) {
 		gmtoff_sign = 1;
 		gmtoff_hour_s[0] = '0';
 		gmtoff_hour_s[1] = '0';
@@ -222,13 +343,22 @@ static int parse_date_time(const char *s, size_t n,
 {
 	int ret;
 
-	if (n >= 10 && (s[10] == 'T' || s[10] == ' ' || s[10] == '\0')) {
+	if ((n >= 16) && (parse_wday(s, NULL) != -ENOENT)) {
+		/* RFC 1123 date */
+		ret = parse_date_rfc1123(s, 16, year, mon, mday);
+		if (ret < 0)
+			return ret;
+		s += ret;
+		n -= ret;
+	} else if (n >= 10 && (s[10] == 'T' || s[10] == ' ' || s[10] == '\0')) {
+		/* ISO 8601 long date */
 		ret = parse_date(s, 10, year, mon, mday);
 		if (ret < 0)
 			return ret;
 		s += 10;
 		n -= 10;
 	} else if (n >= 8 && (s[8] == 'T' || s[8] == ' ' || s[8] == '\0')) {
+		/* ISO 8601 short date */
 		ret = parse_date(s, 8, year, mon, mday);
 		if (ret < 0)
 			return ret;
@@ -553,19 +683,27 @@ int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 	gmtoff_min = (gmtoff_sign * utc_offset_sec / 60) % 60;
 
 	switch (fmt) {
-	case TIME_FMT_SHORT:
+	case TIME_FMT_ISO8601_SHORT:
 		snprintf(s, n, "%04u%02u%02uT%02u%02u%02u%c%02u%02u",
 			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec,
 			gmtoff_sign < 0 ? '-' : '+',
 			gmtoff_hour, gmtoff_min);
 		break;
-	case TIME_FMT_LONG:
+	case TIME_FMT_ISO8601_LONG:
 		snprintf(s, n, "%04u-%02u-%02uT%02u:%02u:%02u%c%02u:%02u",
 			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec,
 			gmtoff_sign < 0 ? '-' : '+',
 			gmtoff_hour, gmtoff_min);
+		break;
+	case TIME_FMT_RFC1123:
+		if (utc_offset_sec != 0)
+			return -ENOSYS;
+		snprintf(s, n, "%s, %u %s %u %02u:%02u:%02u GMT",
+			wday_str[tm.tm_wday], tm.tm_mday,
+			mon_str[tm.tm_mon], tm.tm_year + 1900,
+			tm.tm_hour, tm.tm_min, tm.tm_sec);
 		break;
 	default:
 		return -EINVAL;

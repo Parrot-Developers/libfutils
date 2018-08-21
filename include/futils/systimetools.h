@@ -191,11 +191,17 @@ int time_local_from_tm(const struct tm *tm, uint64_t *epoch_sec,
 /* Time format for string representation */
 enum time_fmt {
 	TIME_FMT_SHORT,	/* 20180301T014814-1025 */
+	TIME_FMT_ISO8601_SHORT = TIME_FMT_SHORT,
 	TIME_FMT_LONG,	/* 2018-03-01T01:48:14-10:25 */
+	TIME_FMT_ISO8601_LONG = TIME_FMT_LONG,
+	TIME_FMT_RFC1123, /* Mon, 13 Aug 2018 13:39:55 GMT */
 };
 
 /**
- * @brief Get a formated representation of the local time (ISO_8601).
+ * @brief Get a formated representation of the local time
+ * (ISO 8601 or RFC 1123).
+ * @note If using RFC 1123, only UTC is supported, therefore utc_offset_sec
+ * must be null.
  *
  * @param epoch_sec Number of seconds since january 1st 1970 00:00 UTC
  * @param utc_offset_sec Offset in seconds from UTC
@@ -210,7 +216,7 @@ int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 
 /**
  * @brief Parse a formated representation of the local time.
- * @param s date/time as a string (ISO_8601 sohort or long)
+ * @param s date/time as a string (ISO 8601 short or long)
  * @param epoch_sec Number of seconds since january 1st 1970 00:00 UTC
  * @param utc_offset_sec Offset in seconds from UTC
  *
