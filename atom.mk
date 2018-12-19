@@ -17,8 +17,10 @@ LOCAL_SRC_FILES := \
 	src/timetools.c \
 
 ifeq ("$(TARGET_OS)", "linux")
-LOCAL_SRC_FILES += \
-	src/inotify.c
+  LOCAL_SRC_FILES += src/inotify.c
+  ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
+    LOCAL_SRC_FILES += src/dynmbox.c
+  endif
 endif
 
 ifneq ("$(TARGET_OS)","windows")
@@ -26,14 +28,6 @@ LOCAL_SRC_FILES += \
 	src/fdutils.c \
 	src/synctools.c \
 	src/mbox.c
-
-ifneq ("$(TARGET_OS)","darwin")
-ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
-LOCAL_SRC_FILES += \
-	src/dynmbox.c
-endif
-endif
-
 endif
 
 include $(BUILD_LIBRARY)
