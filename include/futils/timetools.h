@@ -141,7 +141,8 @@ int time_timespec_cmp(const struct timespec *t1, const struct timespec *t2);
  * @remarks: behaviour is undefined if operation causes overlap of the tv_sec
  * field.
  */
-int time_timespec_add_us(const struct timespec *ts, int64_t delta, struct timespec *res);
+int time_timespec_add_us(const struct timespec *ts, int64_t delta,
+		struct timespec *res);
 
 /**
  * @brief Add (or substract if delta < 0) to a timespec.
@@ -152,7 +153,8 @@ int time_timespec_add_us(const struct timespec *ts, int64_t delta, struct timesp
  * @remarks: behaviour is undefined if operation causes overlap of the tv_sec
  * field.
  */
-int time_timespec_add_ns(const struct timespec *ts, int64_t delta, struct timespec *res);
+int time_timespec_add_ns(const struct timespec *ts, int64_t delta,
+		struct timespec *res);
 
 /**
  * @brief Convert a timeval to a timespec

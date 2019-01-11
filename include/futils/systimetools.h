@@ -120,9 +120,9 @@ int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
  *        The system time is changed to epoch_sec (UTC)
  *
  *        + if build with libputils:
- *        	the utc_offset_sec is saved in a boxinit property
+ *            the utc_offset_sec is saved in a boxinit property
  *        + if no build with libputils:
- *        	the utc_offset_sec is ignored and will be considered 0
+ *            the utc_offset_sec is ignored and will be considered 0
  *
  * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
  * @param utc_offset_sec Offset in seconds from UTC
@@ -133,12 +133,12 @@ int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec);
 
 /**
  * @brief Get the local time of the system
- * 	  epoch_sec will be retrived from the current system time (UTC)
+ *       epoch_sec will be retrived from the current system time (UTC)
  *
- * 	  + if build with libputils:
- * 	  	the utc_offset_sec will be retrieved from the boxinit property
- * 	  + if no build with libputils:
- * 	  	utc_offset_sec will be 0
+ *       + if build with libputils:
+ *           the utc_offset_sec will be retrieved from the boxinit property
+ *       + if no build with libputils:
+ *           utc_offset_sec will be 0
  *
  * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
  * @param utc_offset_sec Offset in seconds from UTC
@@ -149,12 +149,12 @@ int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec);
 
 /**
  * @brief Get the local time of the system (with milliseconds)
- * 	  epoch_sec will be retrived from the current system time (UTC)
+ *       epoch_sec will be retrived from the current system time (UTC)
  *
- * 	  + if build with libputils:
- * 	  	the utc_offset_sec will be retrieved from the boxinit property
- * 	  + if no build with libputils:
- * 	  	utc_offset_sec will be 0
+ *       + if build with libputils:
+ *           the utc_offset_sec will be retrieved from the boxinit property
+ *       + if no build with libputils:
+ *           utc_offset_sec will be 0
  *
  * @param epoch_sec      Number of seconds since january 1st 1970 00:00 UTC
  * @param ms             Number of milliseconds in the current second
@@ -162,7 +162,8 @@ int time_local_get(uint64_t *epoch_sec, int32_t *utc_offset_sec);
  *
  * @return 0 in case of success, negative errno value in case of error.
  */
-int time_local_ms_get(uint64_t *epoch_sec, uint16_t *ms, int32_t *utc_offset_sec);
+int time_local_ms_get(uint64_t *epoch_sec, uint16_t *ms,
+		int32_t *utc_offset_sec);
 
 /**
  * @brief Fill a tm struct based on epoch_sec and utc_offset_sec
