@@ -38,6 +38,10 @@ extern "C" {
 
 #include <stddef.h>
 
+#if (!defined list_head_init) && (!defined LIST_HEAD_INIT)
+
+#define FUTILS_LIST 1
+
 #define FUTILS_LIST_POISON1 ((void *)0xDEADBEEF)
 #define FUTILS_LIST_POISON2 ((void *)0xDEADDEAD)
 
@@ -247,6 +251,8 @@ list_length(const struct list_node *list)
 	}
 	return length;
 }
+
+#endif /* (!defined list_head_init) && (!defined LIST_HEAD_INIT) */
 
 #ifdef __cplusplus
 }

@@ -41,6 +41,8 @@
 extern "C" {
 #endif
 
+#ifdef FUTILS_LIST
+
 /**
  * hash entry container
  */
@@ -137,6 +139,8 @@ int hash_lookup(const struct hash *hash, uint32_t key, void **data);
  */
 int hash_lookup_const(const struct hash *hash, uint32_t key,
 			   const void **data);
+
+#endif /* FUTILS_LIST */
 
 #ifdef __cplusplus
 }
