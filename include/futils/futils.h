@@ -103,5 +103,6 @@
 #include <futils/synctools.h>
 #include <futils/mbox.h>
 #include <futils/dynmbox.h>
+#include <futils/random.h>
 
 #endif /*_FUTILS_H_ */

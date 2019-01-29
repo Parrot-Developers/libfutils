@@ -15,6 +15,7 @@ LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/systimetools.c \
 	src/timetools.c \
+	src/random.c
 
 ifeq ("$(TARGET_OS)", "linux")
   LOCAL_SRC_FILES += src/inotify.c
