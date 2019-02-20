@@ -615,7 +615,7 @@ int time_local_ms_get(uint64_t *epoch_sec, uint16_t *ms,
 	char prop[SYS_PROP_VALUE_MAX];
 	sys_prop_get(UTC_OFFSET_PROP_NAME, prop, "0");
 	*utc_offset_sec = strtol(prop, NULL, 10);
-#else
+#elif !defined(__MINGW32__)
 	time_t dt;
 	struct tm *tm;
 	time(&dt);
