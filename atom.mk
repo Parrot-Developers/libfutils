@@ -11,6 +11,8 @@ LOCAL_CONDITIONAL_LIBRARIES := OPTIONAL:libputils
 LOCAL_EXPORT_C_INCLUDES := \
 	$(LOCAL_PATH)/include
 
+LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64
+
 LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/systimetools.c \
@@ -28,7 +30,8 @@ ifneq ("$(TARGET_OS)","windows")
 LOCAL_SRC_FILES += \
 	src/fdutils.c \
 	src/synctools.c \
-	src/mbox.c
+	src/mbox.c \
+	src/fs.c
 endif
 
 include $(BUILD_LIBRARY)
