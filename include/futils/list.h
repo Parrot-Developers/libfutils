@@ -95,6 +95,12 @@ list_init(struct list_node *list)
 }
 
 static inline struct list_node*
+list_prev(const struct list_node *list, const struct list_node *item)
+{
+	return (item->prev != list) ? item->prev : NULL;
+}
+
+static inline struct list_node*
 list_next(const struct list_node *list, const struct list_node *item)
 {
 	return (item->next != list) ? item->next : NULL;
