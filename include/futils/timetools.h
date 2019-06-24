@@ -64,7 +64,7 @@ int time_timespec_diff(const struct timespec *start,
  * @brief Check if the diff of two timespec values is in a specific range.
  *
  * @param t1 first timespec
- * @param t2 first timespec
+ * @param t2 second timespec
  * @param range_us the range in microseconds
  * @param diff_us the diff between the two timespec. Can be NULL
  * @return 1 if the diff is in the range, else 0
