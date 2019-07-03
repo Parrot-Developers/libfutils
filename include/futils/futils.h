@@ -92,6 +92,19 @@
 #define STATIC_ASSERT(x, msg) FUTILS_STATIC_ASSERT(x, msg)
 #endif
 
+/** Wrapper for gcc printf attribute */
+#ifndef FUTILS_ATTRIBUTE_FORMAT_PRINTF
+#  if defined(__GNUC__) && defined(__MINGW32__) && !defined(__clang__)
+#    define FUTILS_ATTRIBUTE_FORMAT_PRINTF(_x, _y) \
+		__attribute__((__format__(__gnu_printf__, _x, _y)))
+#  elif defined(__GNUC__)
+#    define FUTILS_ATTRIBUTE_FORMAT_PRINTF(_x, _y) \
+		__attribute__((__format__(__printf__, _x, _y)))
+#  else
+#    define FUTILS_ATTRIBUTE_FORMAT_PRINTF(_x, _y)
+#  endif
+#endif /* !FUTILS_ATTRIBUTE_FORMAT_PRINTF */
+
 /**
  * include libfutils headers
  **/
@@ -104,5 +117,6 @@
 #include <futils/mbox.h>
 #include <futils/dynmbox.h>
 #include <futils/random.h>
+#include <futils/futils.hpp>
 
 #endif /*_FUTILS_H_ */
