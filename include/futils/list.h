@@ -263,12 +263,14 @@ list_length(const struct list_node *list)
 /* Push one element into the list */
 #define list_push(list, elem) list_add_before(list, elem)
 
-/* Pop one element from the list. */
+/* Pop one element from the list. return NULL if the list is empty */
 #define list_pop(list, type, member)                                           \
 	({                                                                     \
 		__typeof__(((type *)0)->member) * __pop_ptr = list_first(list);\
-		list_del(__pop_ptr);                                           \
-		FUTILS_CONTAINER_OF(__pop_ptr, type, member);                  \
+		__pop_ptr == list ? NULL : ({                                  \
+			list_del(__pop_ptr);                                   \
+			FUTILS_CONTAINER_OF(__pop_ptr, type, member);          \
+		});                                                            \
 	})
 
 #endif /* (!defined list_head_init) && (!defined LIST_HEAD_INIT) */
