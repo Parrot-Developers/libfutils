@@ -218,6 +218,11 @@ list_is_last(const struct list_node *list, const struct list_node *node)
 			tmp = pos->next; pos != (list);	\
 			pos = tmp, tmp = pos->next)
 
+#define list_walk_backward_safe(list, pos, tmp)	\
+	for (pos = (list)->prev,			\
+			tmp = pos->prev; pos != (list);	\
+			pos = tmp, tmp = pos->prev)
+
 #define list_walk_entry_forward(list, pos, member)			\
 	for (pos = list_entry((list)->next, __typeof__(*pos), member);	\
 		&pos->member != (list);					\

@@ -260,7 +260,7 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 	ret = dynmbox_push(box, msg_sent, max_msg_size);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	memset(msg_read, 0, SIZEOF_ARRAY(msg_read));
+	memset(msg_read, 0, sizeof(msg_read));
 	ret = dynmbox_peek(box, msg_read);
 	CU_ASSERT_EQUAL(ret, max_msg_size);
 	error = 0;
@@ -272,7 +272,7 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 	ret = dynmbox_push(box, msg_sent, max_msg_size / 2);
 	CU_ASSERT_EQUAL(ret, 0);
 
-	memset(msg_read, 0, SIZEOF_ARRAY(msg_read));
+	memset(msg_read, 0, sizeof(msg_read));
 	ret = dynmbox_peek(box, msg_read);
 	CU_ASSERT_EQUAL(ret, max_msg_size / 2);
 	error = 0;

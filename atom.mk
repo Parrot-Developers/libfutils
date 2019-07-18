@@ -44,6 +44,7 @@ LOCAL_MODULE := tst-libfutils
 LOCAL_SRC_FILES := \
 	tests/futils_test.c \
 	tests/futils_test_dynmbox.c \
+	tests/futils_test_list.c \
 	tests/futils_test_systimetools.c
 
 LOCAL_LIBRARIES := libfutils libcunit
