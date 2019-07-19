@@ -15,6 +15,7 @@ LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64
 
 LOCAL_SRC_FILES := \
 	src/hash.c \
+	src/mbox.c \
 	src/systimetools.c \
 	src/timetools.c \
 	src/random.c
@@ -30,8 +31,9 @@ ifneq ("$(TARGET_OS)","windows")
 LOCAL_SRC_FILES += \
 	src/fdutils.c \
 	src/synctools.c \
-	src/mbox.c \
 	src/fs.c
+else
+LOCAL_LDLIBS += -lws2_32
 endif
 
 include $(BUILD_LIBRARY)
@@ -45,9 +47,14 @@ LOCAL_SRC_FILES := \
 	tests/futils_test.c \
 	tests/futils_test_dynmbox.c \
 	tests/futils_test_list.c \
+	tests/futils_test_mbox.c \
 	tests/futils_test_systimetools.c
 
 LOCAL_LIBRARIES := libfutils libcunit
+
+ifeq ("$(TARGET_OS)","windows")
+  LOCAL_LDLIBS += -lws2_32
+endif
 
 include $(BUILD_EXECUTABLE)
 

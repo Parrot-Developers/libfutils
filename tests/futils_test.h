@@ -32,6 +32,7 @@
 #ifndef _FUTILS_TEST_H_
 #define _FUTILS_TEST_H_
 
+#include <inttypes.h>
 #include <limits.h>
 #include <unistd.h>
 #include "futils/futils.h"

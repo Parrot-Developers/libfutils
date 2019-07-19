@@ -111,7 +111,8 @@ static void test_systimetools_parse(void)
 		if (ret != data->ret ||
 				epoch_sec != data->epoch_sec ||
 				utc_off_sec != data->utc_off_sec) {
-			printf("\n%s %lu(%lu) %d(%d)\n", data->s,
+			printf("\n%s %" PRIu64 "(%" PRIu64 ") %d(%d)\n",
+				data->s,
 				epoch_sec, data->epoch_sec,
 				utc_off_sec, data->utc_off_sec);
 		}
@@ -152,7 +153,7 @@ static void test_systimetools_format(void)
 		CU_ASSERT_STRING_EQUAL(s, data->s);
 
 		if (ret != 0 || strcmp(s, data->s) != 0) {
-			printf("\n%lu %d %s(%s)\n",
+			printf("\n%" PRIu64 " %d %s(%s)\n",
 				data->epoch_sec, data->utc_off_sec,
 				s, data->s);
 		}

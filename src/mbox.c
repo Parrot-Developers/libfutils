@@ -39,6 +39,12 @@
 #include "futils/fdutils.h"
 #include "futils/mbox.h"
 
+#define ULOG_TAG mbox
+#include <ulog.h>
+ULOG_DECLARE_TAG(mbox);
+
+#ifndef _WIN32
+
 struct mbox {
 	/* pipes fds */
 	int fds[2];
@@ -130,3 +136,183 @@ int mbox_peek(struct mbox *box, void *msg)
 	return (ret < 0) ? -errno : 0;
 }
 
+#else /* _WIN32 */
+
+#include <winsock2.h>
+
+#undef errno
+#define errno	((int)WSAGetLastError())
+
+struct mbox {
+	/* socket fds */
+	SOCKET server;
+	SOCKET rfd;
+	SOCKET wfd;
+
+	/* message size */
+	size_t msg_size;
+};
+
+struct mbox *mbox_new(size_t msg_size)
+{
+	struct mbox *box = NULL;
+	struct sockaddr_in addr;
+	int addrlen = 0;
+	u_long mode = 0;
+
+	if (msg_size == 0)
+		return NULL;
+
+	/* allocate mbox */
+	box = calloc(1, sizeof(*box));
+	if (!box)
+		return NULL;
+	box->server = INVALID_SOCKET;
+	box->rfd = INVALID_SOCKET;
+	box->wfd = INVALID_SOCKET;
+
+	box->server = socket(AF_INET, SOCK_STREAM, 0);
+	if (box->server == INVALID_SOCKET) {
+		ULOG_ERRNO("socket", errno);
+		goto error;
+	}
+
+	/* Bind and listen the server socket (on a dynamic port */
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	if (bind(box->server, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		ULOG_ERRNO("bind", errno);
+		goto error;
+	}
+
+	if (listen(box->server, 1) < 0) {
+		ULOG_ERRNO("listen", errno);
+		goto error;
+	}
+
+	/* Retreive the bound port */
+	addrlen = sizeof(addr);
+	if (getsockname(box->server, (struct sockaddr *)&addr, &addrlen) < 0) {
+		ULOG_ERRNO("getsockname", errno);
+		goto error;
+	}
+
+	/* Create a write fd and connect to server  */
+	box->wfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (box->wfd == INVALID_SOCKET) {
+		ULOG_ERRNO("socket", errno);
+		goto error;
+	}
+
+	if (connect(box->wfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		ULOG_ERRNO("connect", errno);
+		goto error;
+	}
+
+	/* Accept connection on server */
+	box->rfd = accept(box->server, NULL, NULL);
+	if (box->rfd == INVALID_SOCKET) {
+		ULOG_ERRNO("accept", errno);
+		goto error;
+	}
+
+	/* Set non-blocking mode */
+	mode = 1;
+	if (ioctlsocket(box->rfd, FIONBIO, &mode) < 0) {
+		ULOG_ERRNO("ioctlsocket", errno);
+		goto error;
+	}
+	if (ioctlsocket(box->wfd, FIONBIO, &mode) < 0) {
+		ULOG_ERRNO("ioctlsocket", errno);
+		goto error;
+	}
+
+	box->msg_size = msg_size;
+	return box;
+
+error:
+	mbox_destroy(box);
+	return NULL;
+}
+
+void mbox_destroy(struct mbox *box)
+{
+	if (!box)
+		return;
+
+	if (box->server != INVALID_SOCKET) {
+		shutdown(box->server, SD_BOTH);
+		closesocket(box->server);
+	}
+
+	if (box->rfd != INVALID_SOCKET) {
+		shutdown(box->rfd, SD_BOTH);
+		closesocket(box->rfd);
+	}
+
+	if (box->wfd != INVALID_SOCKET) {
+		shutdown(box->wfd, SD_BOTH);
+		closesocket(box->wfd);
+	}
+
+	free(box);
+}
+
+int mbox_get_read_fd(const struct mbox *box)
+{
+	if (box == NULL)
+		return -1;
+
+	/* Winsock2's socket() returns the unsigned type SOCKET,
+	 * which is a 32-bit type for WIN32 and a 64-bit type for WIN64;
+	 * as we cast the result to an int, return an error if the
+	 * returned value does not fit into 31 bits. */
+	if (box->rfd > (SOCKET)0x7fffffff) {
+		ULOGE("Cannot return socket as a 32-bit 'int'");
+		return -1;
+	}
+	return (int)box->rfd;
+}
+
+int mbox_push(struct mbox *box, const void *msg)
+{
+	int ret = 0;
+
+	if (!msg || !box)
+		return -EINVAL;
+
+	ret = send(box->wfd, msg, box->msg_size, 0);
+
+	if (ret < 0) {
+		ULOG_ERRNO("send", errno);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+int mbox_peek(struct mbox *box, void *msg)
+{
+	int ret = 0;
+
+	if (!msg || !box)
+		return -EINVAL;
+
+	ret = recv(box->rfd, msg, box->msg_size, 0);
+
+	/* check eof */
+	if (ret == 0)
+		return -EPIPE;
+
+	if (ret < 0) {
+		if (errno == WSAEWOULDBLOCK)
+			return -EAGAIN;
+		ULOG_ERRNO("recv", errno);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+#endif /* _WIN32 */

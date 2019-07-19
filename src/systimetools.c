@@ -30,8 +30,9 @@
  ******************************************************************************/
 
 /* For gmtime_r access */
-#ifdef __MINGW32__
+#ifdef _WIN32
 #  define _POSIX_C_SOURCE 2
+#  include <windows.h>
 #endif
 
 #include <stdio.h>
@@ -554,7 +555,7 @@ int time_ctx_get_local(struct time_ctx *ctx, uint64_t *epoch_sec,
 
 int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec)
 {
-#ifdef __MINGW32__
+#ifdef _WIN32
 	return -ENOSYS;
 #else
 	struct timeval tv;
@@ -615,12 +616,17 @@ int time_local_ms_get(uint64_t *epoch_sec, uint16_t *ms,
 	char prop[SYS_PROP_VALUE_MAX];
 	sys_prop_get(UTC_OFFSET_PROP_NAME, prop, "0");
 	*utc_offset_sec = strtol(prop, NULL, 10);
-#elif !defined(__MINGW32__)
+#elif defined(_WIN32)
+	TIME_ZONE_INFORMATION tzi;
+	memset(&tzi, 0, sizeof(tzi));
+	GetTimeZoneInformation(&tzi);
+	*utc_offset_sec = tzi.Bias * 60;
+#else
 	time_t dt;
-	struct tm *tm;
+	struct tm tm;
 	time(&dt);
-	tm = localtime(&dt);
-	*utc_offset_sec = tm->tm_gmtoff;
+	localtime_r(&dt, &tm);
+	*utc_offset_sec = tm.tm_gmtoff;
 #endif
 
 	return 0;
@@ -629,9 +635,6 @@ int time_local_ms_get(uint64_t *epoch_sec, uint16_t *ms,
 int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 		struct tm *tm)
 {
-#ifdef __MINGW32__
-	return -ENOSYS;
-#else
 	time_t t;
 	if (!tm)
 		return -EINVAL;
@@ -641,32 +644,36 @@ int time_local_to_tm(uint64_t epoch_sec, int32_t utc_offset_sec,
 	if (gmtime_r(&t, tm) == NULL)
 		return -errno;
 
+#ifndef _WIN32
 	tm->tm_gmtoff = utc_offset_sec;
+#endif /* !_WIN32 */
 
 	return 0;
-#endif
 }
 
 int time_local_from_tm(const struct tm *tm, uint64_t *epoch_sec,
 		int32_t *utc_offset_sec)
 {
-#ifdef __MINGW32__
-	return -ENOSYS;
-#else
 	if (!tm)
 		return -EINVAL;
 
 	if (!epoch_sec && !utc_offset_sec)
 		return -EINVAL;
 
+#ifdef _WIN32
+	if (epoch_sec)
+		*epoch_sec = tm_mkepoch_local(tm, 0);
+
+	if (utc_offset_sec)
+		*utc_offset_sec = 0;
+#else /* !_WIN32 */
 	if (epoch_sec)
 		*epoch_sec = tm_mkepoch_local(tm, tm->tm_gmtoff);
 
 	if (utc_offset_sec)
 		*utc_offset_sec = tm->tm_gmtoff;
-
+#endif /* !_WIN32 */
 	return 0;
-#endif
 }
 
 int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,

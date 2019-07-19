@@ -29,6 +29,10 @@
  *
  ******************************************************************************/
 
+#ifdef _WIN32
+#  define _CRT_RAND_S
+#endif  /* _WIN32 */
+
 #include "futils/random.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -43,7 +47,18 @@ ULOG_DECLARE_TAG(futils_random);
 int futils_random_bytes(void *buffer, size_t len)
 {
 #ifdef _WIN32
-	return -ENOSYS;
+	uint8_t *p = buffer;
+	int ret = 0;
+	unsigned int val = 0;
+	while (len-- > 0) {
+		if (rand_s(&val) < 0) {
+			ret = -errno;
+			ULOG_ERRNO("rand_s", -ret);
+			return ret;
+		}
+		*p++ = val & 0xff;
+	}
+	return 0;
 #else
 	int fd;
 	ssize_t rd;

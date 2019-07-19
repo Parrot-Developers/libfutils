@@ -33,6 +33,7 @@
 #include "futils/futils.h"
 #include "stdlib.h"
 
+extern CU_TestInfo s_mbox_tests[];
 extern CU_TestInfo s_dynmbox_tests[];
 extern CU_TestInfo s_systimetools_tests[];
 extern CU_TestInfo s_list_tests[];
@@ -58,6 +59,7 @@ CU_TestInfo s_futils_tests[] = {
 
 static CU_SuiteInfo s_suites[] = {
 	{(char *)"futils", NULL, NULL, s_futils_tests},
+	{(char *)"mbox", NULL, NULL, s_mbox_tests},
 	{(char *)"dynmbox", NULL, NULL, s_dynmbox_tests},
 	{(char *)"systimetools", NULL, NULL, s_systimetools_tests},
 	{(char *)"list", NULL, NULL, s_list_tests},
