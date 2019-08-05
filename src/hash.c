@@ -35,7 +35,7 @@
 /**
  * hash prime table
  */
-static const uint32_t hash_prime_tab[] = {
+static const uint32_t futils_hash_prime_tab[] = {
 	1, 2, 3, 7, 13, 31, 61, 127, 251, 509, 1021,
 	2039, 4093, 8191, 16381, 32749, 65521, 131071,
 	262139, 524287, 1048573, 2097143, 4194301, 8388593,
@@ -43,8 +43,9 @@ static const uint32_t hash_prime_tab[] = {
 	536870909, 1073741789, 2147483647
 };
 
-static const uint32_t hash_prime_tab_length =
-			sizeof(hash_prime_tab) / sizeof(hash_prime_tab[0]);
+static const uint32_t futils_hash_prime_tab_length =
+			sizeof(futils_hash_prime_tab) /
+			sizeof(futils_hash_prime_tab[0]);
 
 #define DJB2_HASH_START (5381)
 #define MULT33(_x_) (((_x_) << 5)+(_x_))
@@ -69,7 +70,7 @@ static uint32_t hash_32(uint32_t key)
 	return hash;
 }
 
-int hash_init(struct hash *hash, size_t size)
+int futils_hash_init(struct hash *hash, size_t size)
 {
 	size_t i;
 	int ret;
@@ -83,10 +84,10 @@ int hash_init(struct hash *hash, size_t size)
 	memset(hash, 0 , sizeof(*hash));
 
 	/* get upper prime number for tab size */
-	for (i = 0; (hash_prime_tab[i] <= size) &&
-		    ((i + 1) < hash_prime_tab_length); i++)
+	for (i = 0; (futils_hash_prime_tab[i] <= size) &&
+		    ((i + 1) < futils_hash_prime_tab_length); i++)
 		;
-	hash->size = hash_prime_tab[i];
+	hash->size = futils_hash_prime_tab[i];
 
 	/* allocate buckets */
 	hash->buckets = calloc(hash->size, sizeof(struct hash_entry *));
@@ -103,7 +104,7 @@ error:
 	return ret;
 }
 
-int hash_remove_all(struct hash *hash)
+int futils_hash_remove_all(struct hash *hash)
 {
 	size_t i;
 	struct hash_entry *entry, *next;
@@ -125,19 +126,19 @@ int hash_remove_all(struct hash *hash)
 	return 0;
 }
 
-int hash_destroy(struct hash *hash)
+int futils_hash_destroy(struct hash *hash)
 {
 	if (!hash)
 		return -EINVAL;
 
-	hash_remove_all(hash);
+	futils_hash_remove_all(hash);
 	free(hash->buckets);
 	memset(hash, 0 , sizeof(*hash));
 	return 0;
 }
 
-static int hash_insert_entry(struct hash *hash, uint32_t key,
-				  struct hash_entry *new_entry)
+static int futils_hash_insert_entry(struct hash *hash, uint32_t key,
+				    struct hash_entry *new_entry)
 {
 	uint32_t hash_val;
 	struct hash_entry *entry;
@@ -169,7 +170,7 @@ static int hash_insert_entry(struct hash *hash, uint32_t key,
 	return 0;
 }
 
-int hash_insert(struct hash *hash, uint32_t key, void *data)
+int futils_hash_insert(struct hash *hash, uint32_t key, void *data)
 {
 	struct hash_entry *entry;
 	int ret;
@@ -186,15 +187,15 @@ int hash_insert(struct hash *hash, uint32_t key, void *data)
 	entry->key = key;
 	entry->next = NULL;
 
-	ret = hash_insert_entry(hash, key, entry);
+	ret = futils_hash_insert_entry(hash, key, entry);
 	if (ret < 0)
 		free(entry);
 
 	return ret;
 }
 
-int hash_insert_const(struct hash *hash, uint32_t key,
-			   const void *data)
+int futils_hash_insert_const(struct hash *hash, uint32_t key,
+			     const void *data)
 {
 	struct hash_entry *entry;
 	int ret;
@@ -211,15 +212,15 @@ int hash_insert_const(struct hash *hash, uint32_t key,
 	entry->key = key;
 	entry->next = NULL;
 
-	ret = hash_insert_entry(hash, key, entry);
+	ret = futils_hash_insert_entry(hash, key, entry);
 	if (ret < 0)
 		free(entry);
 
 	return ret;
 }
 
-static int hash_lookup_entry(const struct hash *tab, uint32_t key,
-				  struct hash_entry **_entry)
+static int futils_hash_lookup_entry(const struct hash *tab, uint32_t key,
+				    struct hash_entry **_entry)
 {
 	struct hash_entry *entry;
 	uint32_t hash;
@@ -244,12 +245,12 @@ static int hash_lookup_entry(const struct hash *tab, uint32_t key,
 	return 0;
 }
 
-int hash_lookup(const struct hash *hash, uint32_t key, void **data)
+int futils_hash_lookup(const struct hash *hash, uint32_t key, void **data)
 {
 	struct hash_entry *entry;
 	int ret;
 
-	ret = hash_lookup_entry(hash, key, &entry);
+	ret = futils_hash_lookup_entry(hash, key, &entry);
 	if (ret < 0)
 		return ret;
 
@@ -262,13 +263,13 @@ int hash_lookup(const struct hash *hash, uint32_t key, void **data)
 	return 0;
 }
 
-int hash_lookup_const(const struct hash *hash, uint32_t key,
-			   const void **data)
+int futils_hash_lookup_const(const struct hash *hash, uint32_t key,
+			     const void **data)
 {
 	struct hash_entry *entry;
 	int ret;
 
-	ret = hash_lookup_entry(hash, key, &entry);
+	ret = futils_hash_lookup_entry(hash, key, &entry);
 	if (ret < 0)
 		return ret;
 
@@ -278,7 +279,7 @@ int hash_lookup_const(const struct hash *hash, uint32_t key,
 	return 0;
 }
 
-int hash_remove(struct hash *tab, uint32_t key)
+int futils_hash_remove(struct hash *tab, uint32_t key)
 {
 	struct hash_entry *entry, *prev;
 	uint32_t hash;
