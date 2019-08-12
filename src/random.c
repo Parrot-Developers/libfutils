@@ -43,7 +43,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,6 +53,21 @@
 #define ULOG_TAG futils_random
 #include <ulog.h>
 ULOG_DECLARE_TAG(futils_random);
+
+#if defined(__STDC_HOSTED__) && __STDC_HOSTED__ &&			\
+	defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L) &&     \
+	(!defined(__STDC_NO_THREADS__) || !__STDC_NO_THREADS__)
+#	include <threads.h>
+#	define HAVE_THREAD_LOCAL 1
+#elif defined(__GNUC__) && defined(__GLIBC__)
+#	define thread_local __thread
+#	define HAVE_THREAD_LOCAL 1
+#elif defined(_WIN32)
+#	define thread_local __declspec(thread)
+#	define HAVE_THREAD_LOCAL 1
+#else
+#	include <pthread.h>
+#endif
 
 #if defined(__GLIBC__) && \
 	((__GLIBC__ > 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
@@ -67,6 +81,24 @@ struct pool {
 	unsigned int available;
 	uint8_t buffer[512];
 };
+
+#ifdef HAVE_THREAD_LOCAL
+
+static inline struct pool *pool_get(void)
+{
+	static thread_local struct pool pool;
+	struct pool *p = &pool;
+
+/* Workaround for GCC bug #82803:
+   defeat GCC knowledge of Thread Local Storage (TLS) variable */
+#if defined(__GNUC__) && !defined(__clang__)
+	__asm__ ("" : "=r" (p) : "0" (p));
+#endif
+
+	return p;
+}
+
+#else /* !HAVE_THREAD_LOCAL */
 
 static void pool_free(void *ptr)
 {
@@ -125,6 +157,8 @@ static struct pool *pool_get(void)
 
 	return pool;
 }
+
+#endif /* !HAVE_THREAD_LOCAL */
 
 /* get address of available bytes in the pool */
 static inline const void *pool_buffer_get(struct pool *pool, size_t len)
