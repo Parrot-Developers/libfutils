@@ -44,6 +44,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -62,25 +64,66 @@ ULOG_DECLARE_TAG(futils_random);
 static int rand_fetch(void *buffer, size_t len);
 
 struct pool {
-	pthread_mutex_t mutex;
 	unsigned int available;
 	uint8_t buffer[512];
 };
 
-static inline struct pool *pool_acquire(void)
+static void pool_free(void *ptr)
 {
-	static struct pool pool = {
-		.mutex = PTHREAD_MUTEX_INITIALIZER,
-	};
+	struct pool *pool = ptr;
 
-	pthread_mutex_lock(&pool.mutex);
+	memset(pool, 0, sizeof(*pool));
 
-	return &pool;
+	free(pool);
 }
 
-static inline void pool_release(struct pool *pool)
+static struct pool *pool_new(void)
 {
-	pthread_mutex_unlock(&pool->mutex);
+	struct pool *pool;
+
+	pool = malloc(sizeof(*pool));
+	if (!pool)
+		return NULL;
+
+	pool->available = 0;
+
+	return pool;
+}
+
+static pthread_key_t pool_key;
+
+static void pool_once(void)
+{
+	int err;
+
+	err = pthread_key_create(&pool_key, pool_free);
+	if (err)
+		ULOG_ERRNO("pthread_key_create()", err);
+}
+
+static struct pool *pool_get(void)
+{
+	static pthread_once_t once = PTHREAD_ONCE_INIT;
+	struct pool *pool;
+	int err;
+
+	pthread_once(&once, pool_once);
+
+	pool = pthread_getspecific(pool_key);
+	if (!pool) {
+		pool = pool_new();
+		if (!pool)
+			return NULL;
+
+		err = pthread_setspecific(pool_key, pool);
+		if (err) {
+			ULOG_ERRNO("pthread_setspecific()", err);
+			pool_free(pool);
+			return NULL;
+		}
+	}
+
+	return pool;
 }
 
 /* get address of available bytes in the pool */
@@ -147,6 +190,9 @@ static int pool_rand(struct pool *pool, void *buffer, size_t len)
 {
 	const uint8_t *ptr;
 	int err;
+
+	if (!pool)
+		return -ENOMEM;
 
 	/* if request is too large, write
 	   directly to the output buffer */
@@ -268,19 +314,12 @@ static int rand_fetch(void *buffer, size_t len)
 
 int futils_random_bytes(void *buffer, size_t len)
 {
-	struct pool *pool;
-	int err;
+	struct pool *pool = pool_get();
 
 	if (!buffer || len == 0)
 		return -EINVAL;
 
-	pool = pool_acquire();
-
-	err = pool_rand(pool, buffer, len);
-
-	pool_release(pool);
-
-	return err;
+	return pool_rand(pool, buffer, len);
 }
 
 int futils_random8(uint8_t *val)
