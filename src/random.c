@@ -40,8 +40,11 @@
 #endif  /* _WIN32 */
 
 #include "futils/random.h"
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -56,7 +59,117 @@ ULOG_DECLARE_TAG(futils_random);
 #define HAVE_GETRANDOM 1
 #endif
 
-int futils_random_bytes(void *buffer, size_t len)
+static int rand_fetch(void *buffer, size_t len);
+
+struct pool {
+	pthread_mutex_t mutex;
+	unsigned int available;
+	uint8_t buffer[512];
+};
+
+static inline struct pool *pool_acquire(void)
+{
+	static struct pool pool = {
+		.mutex = PTHREAD_MUTEX_INITIALIZER,
+	};
+
+	pthread_mutex_lock(&pool.mutex);
+
+	return &pool;
+}
+
+static inline void pool_release(struct pool *pool)
+{
+	pthread_mutex_unlock(&pool->mutex);
+}
+
+/* get address of available bytes in the pool */
+static inline const void *pool_buffer_get(struct pool *pool, size_t len)
+{
+	assert(len <= pool->available);
+
+	return &pool->buffer[sizeof(pool->buffer) - pool->available];
+}
+
+/* consume available bytes in the pool */
+static inline void pool_buffer_consume(struct pool *pool,
+				       const void *ptr, size_t len)
+{
+	assert(ptr == &pool->buffer[sizeof(pool->buffer) - pool->available]);
+	assert(len <= pool->available);
+
+	memset(&pool->buffer[sizeof(pool->buffer) - pool->available],
+	       0,
+	       len);
+
+	pool->available -= len;
+}
+
+static int pool_reload(struct pool *pool)
+{
+	size_t consumed;
+	int err;
+
+	consumed = sizeof(pool->buffer) - pool->available;
+
+	/* bring remaining bytes to front */
+	memmove(pool->buffer,
+		&pool->buffer[consumed],
+		pool->available);
+
+	err = rand_fetch(&pool->buffer[pool->available],
+			 consumed);
+	if (err < 0)
+		return err;
+
+	pool->available = sizeof(pool->buffer);
+
+	return 0;
+}
+
+static inline int pool_reload_if_needed(struct pool *pool, size_t required)
+{
+	int err;
+
+	if (pool->available >= required)
+		return 0;
+
+	err = pool_reload(pool);
+	if (err < 0)
+		return err;
+
+	assert(pool->available >= required);
+
+	return 0;
+}
+
+static int pool_rand(struct pool *pool, void *buffer, size_t len)
+{
+	const uint8_t *ptr;
+	int err;
+
+	/* if request is too large, write
+	   directly to the output buffer */
+	if (len >= sizeof(pool->buffer))
+		return rand_fetch(buffer, len);
+
+	/* append more bytes in the pool if
+	   there's not enough byte remaining */
+	err = pool_reload_if_needed(pool, len);
+	if (err < 0)
+		return err;
+
+	/* extract random bytes from the random pool */
+	ptr = pool_buffer_get(pool, len);
+
+	memcpy(buffer, ptr, len);
+
+	pool_buffer_consume(pool, ptr, len);
+
+	return 0;
+}
+
+static int rand_fetch(void *buffer, size_t len)
 {
 #ifdef _WIN32
 	uint8_t *p = buffer;
@@ -92,9 +205,6 @@ int futils_random_bytes(void *buffer, size_t len)
 	int fd;
 	ssize_t rd;
 	int ret = 0;
-
-	if (!buffer || len == 0)
-		return -EINVAL;
 
 #ifdef HAVE_GETRANDOM
 	while (len) {
@@ -154,6 +264,23 @@ int futils_random_bytes(void *buffer, size_t len)
 	close(fd);
 	return ret;
 #endif
+}
+
+int futils_random_bytes(void *buffer, size_t len)
+{
+	struct pool *pool;
+	int err;
+
+	if (!buffer || len == 0)
+		return -EINVAL;
+
+	pool = pool_acquire();
+
+	err = pool_rand(pool, buffer, len);
+
+	pool_release(pool);
+
+	return err;
 }
 
 int futils_random8(uint8_t *val)
