@@ -25,7 +25,8 @@
  *
  * @file random.h
  *
- * @brief strong random functions.
+ * @brief fast, secure random functions.
+ *        and strong random function.
  *
  ******************************************************************************/
 
@@ -38,6 +39,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief Fill a buffer with random bytes
+ *
+ * @param buffer buffer to fill
+ * @param len    number of bytes to fill
+ *
+ * @return 0 buffer filled with len random bytes
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ */
+int futils_random_strong(void *buffer, size_t len);
 
 /**
  * @brief Fill a buffer with random bytes

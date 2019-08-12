@@ -25,7 +25,8 @@
  *
  * @file random.c
  *
- * @brief strong random functions.
+ * @brief fast, secure random functions.
+ *        and strong random function.
  *
  ******************************************************************************/
 
@@ -151,9 +152,150 @@ static inline unsigned int ilog2plus1(uint64_t v)
 	return r;
 }
 
+static inline uint32_t rotl(uint32_t x, unsigned int k)
+{
+	return (x << k) | (x >> (32 - k));
+}
+
+static inline void read_32le(const uint8_t *d, uint32_t *v)
+{
+	*v = 0;
+	*v |= (uint32_t)d[0] <<	 0;
+	*v |= (uint32_t)d[1] <<	 8;
+	*v |= (uint32_t)d[2] << 16;
+	*v |= (uint32_t)d[3] << 24;
+}
+
+static inline void write_32le(const uint32_t v, uint8_t *d)
+{
+	d[0] = (v >>  0);
+	d[1] = (v >>  8);
+	d[2] = (v >> 16);
+	d[3] = (v >> 24);
+}
+
+#define CHACHA_KEY_SIZE 32
+#define CHACHA_NONCE_SIZE 12
+#define CHACHA_KEY_NONCE_SIZE (CHACHA_KEY_SIZE + CHACHA_NONCE_SIZE)
+#define CHACHA_BLOCK_SIZE 64
+
+#define CHACHA_ROUNDS 20
+
+static inline void chacha_quarterround(uint32_t x[16],
+				       const unsigned int a,
+				       const unsigned int b,
+				       const unsigned int c,
+				       const unsigned int d)
+{
+	x[a] += x[b]; x[d] = rotl(x[d] ^ x[a], 16);
+	x[c] += x[d]; x[b] = rotl(x[b] ^ x[c], 12);
+	x[a] += x[b]; x[d] = rotl(x[d] ^ x[a], 8);
+	x[c] += x[d]; x[b] = rotl(x[b] ^ x[c], 7);
+}
+
+static inline void chacha_block(const uint32_t in[16],
+				uint8_t out[CHACHA_BLOCK_SIZE])
+{
+	unsigned int i;
+	uint32_t x[16];
+
+	for (i = 0; i < 16; i++)
+		x[i] = in[i];
+
+	for (i = 0; i < CHACHA_ROUNDS; i += 2) {
+		chacha_quarterround(x, 0, 4,  8, 12);
+		chacha_quarterround(x, 1, 5,  9, 13);
+		chacha_quarterround(x, 2, 6, 10, 14);
+		chacha_quarterround(x, 3, 7, 11, 15);
+		chacha_quarterround(x, 0, 5, 10, 15);
+		chacha_quarterround(x, 1, 6, 11, 12);
+		chacha_quarterround(x, 2, 7,  8, 13);
+		chacha_quarterround(x, 3, 4,  9, 14);
+	}
+
+	for (i = 0; i < 16; i++)
+		x[i] += in[i];
+
+	for (i = 0; i < 16; i++)
+		write_32le(x[i], &out[i * 4]);
+}
+
+/* chacha20 state */
+struct chacha {
+	uint32_t x[16];
+};
+
+static void chacha_init(struct chacha *chacha,
+			const uint8_t k[CHACHA_KEY_NONCE_SIZE])
+{
+	static const uint8_t c[16] = "expand 32-byte k";
+
+	/* constant */
+	read_32le(&c[0], &chacha->x[0]);
+	read_32le(&c[4], &chacha->x[1]);
+	read_32le(&c[8], &chacha->x[2]);
+	read_32le(&c[12], &chacha->x[3]);
+
+	/* key */
+	read_32le(&k[0], &chacha->x[4]);
+	read_32le(&k[4], &chacha->x[5]);
+	read_32le(&k[8], &chacha->x[6]);
+	read_32le(&k[12], &chacha->x[7]);
+	read_32le(&k[16], &chacha->x[8]);
+	read_32le(&k[20], &chacha->x[9]);
+	read_32le(&k[24], &chacha->x[10]);
+	read_32le(&k[28], &chacha->x[11]);
+
+	/* counter */
+	chacha->x[12] = 0;
+
+	/* nonce */
+	read_32le(&k[32], &chacha->x[13]);
+	read_32le(&k[36], &chacha->x[14]);
+	read_32le(&k[40], &chacha->x[15]);
+}
+
+/* get one block of chacha20 keystream */
+static inline void chacha_get(struct chacha *chacha,
+			      uint8_t out[CHACHA_BLOCK_SIZE])
+{
+	chacha_block(chacha->x, out);
+
+	/* counter */
+	chacha->x[12]++;
+}
+
+static void chacha_keystream(struct chacha *chacha,
+			     void *buffer, size_t len)
+{
+	uint8_t *p = buffer;
+
+	/* full blocks */
+	while (len >= CHACHA_BLOCK_SIZE) {
+
+		chacha_get(chacha, p);
+
+		p += CHACHA_BLOCK_SIZE;
+		len -= CHACHA_BLOCK_SIZE;
+	}
+
+	/* last partial block */
+	if (len) {
+		uint8_t tmp[CHACHA_BLOCK_SIZE];
+
+		chacha_get(chacha, tmp);
+
+		memcpy(p, tmp, len);
+
+		memset(tmp, 0, sizeof(tmp));
+	}
+}
+
 static int rand_fetch(void *buffer, size_t len);
 
 struct pool {
+	struct chacha chacha;
+	unsigned int seeded;
 	unsigned int available;
 	uint8_t buffer[512];
 };
@@ -193,6 +335,7 @@ static struct pool *pool_new(void)
 	if (!pool)
 		return NULL;
 
+	pool->seeded = 0;
 	pool->available = 0;
 
 	return pool;
@@ -258,10 +401,40 @@ static inline void pool_buffer_consume(struct pool *pool,
 	pool->available -= len;
 }
 
-static int pool_reload(struct pool *pool)
+static int pool_seed(struct pool *pool)
+{
+	uint8_t key[CHACHA_KEY_NONCE_SIZE];
+	int err;
+
+	err = rand_fetch(key, sizeof(key));
+	if (err) {
+		ULOG_ERRNO("rand_fetch()",
+			   -err);
+		return err;
+	}
+
+	chacha_init(&pool->chacha, key);
+
+	pool->seeded = 1;
+
+	memset(key, 0, sizeof(key));
+
+	return 0;
+}
+
+static inline int pool_seed_if_needed(struct pool *pool)
+{
+	/* seed if needed */
+	if (pool->seeded)
+		return 0;
+
+	return pool_seed(pool);
+}
+
+static void pool_reload(struct pool *pool)
 {
 	size_t consumed;
-	int err;
+	const uint8_t *key;
 
 	consumed = sizeof(pool->buffer) - pool->available;
 
@@ -270,30 +443,50 @@ static int pool_reload(struct pool *pool)
 		&pool->buffer[consumed],
 		pool->available);
 
-	err = rand_fetch(&pool->buffer[pool->available],
+	/* fill pool buffer with pseudorandom bytes */
+	chacha_keystream(&pool->chacha,
+			 &pool->buffer[pool->available],
 			 consumed);
-	if (err < 0)
-		return err;
 
 	pool->available = sizeof(pool->buffer);
 
-	return 0;
+	/* apply a new key for backtracking protection */
+	key = pool_buffer_get(pool, CHACHA_KEY_NONCE_SIZE);
+
+	chacha_init(&pool->chacha, key);
+
+	pool_buffer_consume(pool, key, CHACHA_KEY_NONCE_SIZE);
 }
 
-static inline int pool_reload_if_needed(struct pool *pool, size_t required)
+static inline void pool_reload_if_needed(struct pool *pool,
+					 size_t required)
 {
-	int err;
-
 	if (pool->available >= required)
-		return 0;
+		return;
 
-	err = pool_reload(pool);
-	if (err < 0)
-		return err;
+	pool_reload(pool);
 
 	assert(pool->available >= required);
+}
 
-	return 0;
+static void pool_stir(struct pool *pool, void *buffer, size_t len)
+{
+	struct chacha chacha;
+	const uint8_t *key;
+
+	/* get enough bytes for a new dedicated key */
+	pool_reload_if_needed(pool, CHACHA_KEY_NONCE_SIZE);
+
+	key = pool_buffer_get(pool, CHACHA_KEY_NONCE_SIZE);
+
+	chacha_init(&chacha, key);
+
+	pool_buffer_consume(pool, key, CHACHA_KEY_NONCE_SIZE);
+
+	/* stir key to fill buffer */
+	chacha_keystream(&chacha, buffer, len);
+
+	memset(&chacha, 0, sizeof(chacha));
 }
 
 static int pool_rand(struct pool *pool, void *buffer, size_t len)
@@ -304,16 +497,20 @@ static int pool_rand(struct pool *pool, void *buffer, size_t len)
 	if (!pool)
 		return -ENOMEM;
 
+	err = pool_seed_if_needed(pool);
+	if (err < 0)
+		return err;
+
 	/* if request is too large, write
 	   directly to the output buffer */
-	if (len >= sizeof(pool->buffer))
-		return rand_fetch(buffer, len);
+	if (len >= sizeof(pool->buffer) - CHACHA_KEY_NONCE_SIZE) {
+		pool_stir(pool, buffer, len);
+		return 0;
+	}
 
 	/* append more bytes in the pool if
 	   there's not enough byte remaining */
-	err = pool_reload_if_needed(pool, len);
-	if (err < 0)
-		return err;
+	pool_reload_if_needed(pool, len);
 
 	/* extract random bytes from the random pool */
 	ptr = pool_buffer_get(pool, len);
@@ -765,6 +962,14 @@ static int rand_fetch(void *buffer, size_t len)
 	close(fd);
 	return ret;
 #endif
+}
+
+int futils_random_strong(void *buffer, size_t len)
+{
+	if (!buffer || len == 0)
+		return -EINVAL;
+
+	return rand_fetch(buffer, len);
 }
 
 int futils_random_bytes(void *buffer, size_t len)
