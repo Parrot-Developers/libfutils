@@ -59,3 +59,12 @@ endif
 include $(BUILD_EXECUTABLE)
 
 endif
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := futils-random
+LOCAL_CATEGORY_PATH := test
+LOCAL_DESCRIPTION := futils random benchmark
+LOCAL_SRC_FILES := \
+	tests/futils_random.c
+LOCAL_LIBRARIES := libfutils
+include $(BUILD_EXECUTABLE)
