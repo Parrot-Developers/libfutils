@@ -323,6 +323,14 @@ static int parse_time(const char *s, size_t n,
 		gmtoff_min_s[0] = '0';
 		gmtoff_min_s[1] = '0';
 		gmtoff_min_s[2] = '\0';
+	} else if (n == 2 && (s[0] == 'U') && (s[1] == 'T')) {
+		gmtoff_sign = 1;
+		gmtoff_hour_s[0] = '0';
+		gmtoff_hour_s[1] = '0';
+		gmtoff_hour_s[2] = '\0';
+		gmtoff_min_s[0] = '0';
+		gmtoff_min_s[1] = '0';
+		gmtoff_min_s[2] = '\0';
 	} else {
 		return -EINVAL;
 	}
@@ -711,12 +719,24 @@ int time_local_format(uint64_t epoch_sec, int32_t utc_offset_sec,
 			gmtoff_hour, gmtoff_min);
 		break;
 	case TIME_FMT_RFC1123:
-		if (utc_offset_sec != 0)
-			return -ENOSYS;
-		snprintf(s, n, "%s, %u %s %u %02u:%02u:%02u GMT",
-			wday_str[tm.tm_wday], tm.tm_mday,
-			mon_str[tm.tm_mon], tm.tm_year + 1900,
-			tm.tm_hour, tm.tm_min, tm.tm_sec);
+		if (utc_offset_sec == 0) {
+			/* TODO: "GMT" should not be used any more, use "UT"
+			 * instead; "GMT" is kept for now for compatibility
+			 * issues with old software that will reject "UT"
+			 * in time_local_parse(); update to "UT" here once
+			 * we consider old software is no longer in use. */
+			snprintf(s, n, "%s, %u %s %u %02u:%02u:%02u GMT",
+				wday_str[tm.tm_wday], tm.tm_mday,
+				mon_str[tm.tm_mon], tm.tm_year + 1900,
+				tm.tm_hour, tm.tm_min, tm.tm_sec);
+		} else {
+			snprintf(s, n, "%s, %u %s %u %02u:%02u:%02u %c%02u%02u",
+				wday_str[tm.tm_wday], tm.tm_mday,
+				mon_str[tm.tm_mon], tm.tm_year + 1900,
+				tm.tm_hour, tm.tm_min, tm.tm_sec,
+				gmtoff_sign < 0 ? '-' : '+',
+				gmtoff_hour, gmtoff_min);
+		}
 		break;
 	default:
 		return -EINVAL;
