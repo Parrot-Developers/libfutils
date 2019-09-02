@@ -50,13 +50,21 @@ int futils_random_bytes(void *buffer, size_t len)
 	uint8_t *p = buffer;
 	int ret = 0;
 	unsigned int val = 0;
-	while (len-- > 0) {
+	while (len) {
+		size_t chunk = sizeof(val);
+		if (chunk > len)
+			chunk = len;
+
 		if (rand_s(&val) < 0) {
 			ret = -errno;
 			ULOG_ERRNO("rand_s", -ret);
 			return ret;
 		}
-		*p++ = val & 0xff;
+
+		memcpy(p, &val, chunk);
+
+		p += chunk;
+		len -= chunk;
 	}
 	return 0;
 #else
