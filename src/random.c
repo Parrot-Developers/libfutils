@@ -80,6 +80,7 @@ int futils_random_bytes(void *buffer, size_t len)
 	}
 	return 0;
 #else
+	uint8_t *p = buffer;
 	int fd;
 	ssize_t rd;
 	int ret = 0;
@@ -94,16 +95,26 @@ int futils_random_bytes(void *buffer, size_t len)
 		return ret;
 	}
 
-	rd = read(fd, buffer, len);
-	if (rd < 0) {
-		ret = -errno;
-		ULOG_ERRNO("read", -ret);
-	} else if ((size_t)rd != len) {
-		ret = -EAGAIN;
-		ULOGE("random_bytes: "
-		      "not enough data to fill the buffer (%zd out of %zu)",
-		      rd,
-		      len);
+	while (len) {
+		rd = read(fd, p, len);
+		if (rd < 0) {
+			if (errno == EINTR)
+				continue;
+			ret = -errno;
+			ULOG_ERRNO("read", -ret);
+			break;
+		}
+
+		if (rd == 0) {
+			ret = -EAGAIN;
+			ULOGE("random_bytes: "
+			      "not enough data to fill the buffer (missing %zu bytes)",
+			      len);
+			break;
+		}
+
+		p += (size_t)rd;
+		len -= (size_t)rd;
 	}
 
 	close(fd);
