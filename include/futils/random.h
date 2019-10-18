@@ -57,6 +57,78 @@ int futils_random_strong(void *buffer, size_t len);
  *
  * @param buffer buffer to fill
  * @param len    number of bytes to fill
+ */
+void futils_random(void *buffer, size_t len);
+
+/**
+ * @brief Get a random uint8_t
+ *
+ * @return a 8 bits pseudo random value
+ */
+uint8_t futils_randomr8(void);
+
+/**
+ * @brief Get a random uint16_t
+ *
+ * @return a 16 bits pseudo random value
+ */
+uint16_t futils_randomr16(void);
+
+/**
+ * @brief Get a random uint32_t
+ *
+ * @return a 32 bits pseudo random value
+ */
+uint32_t futils_randomr32(void);
+
+/**
+ * @brief Get a random uint64_t
+ *
+ * @return a 64 bits pseudo random value
+ */
+uint64_t futils_randomr64(void);
+
+/**
+ * @brief Get a random uint8_t up to a maximum
+ *
+ * @param maximum maximum value of the returned value
+ *
+ * @return a 8 bits value in [0..maximum]
+ */
+uint8_t futils_randomr8_maximum(uint8_t maximum);
+
+/**
+ * @brief Get a random uint16_t up to a maximum
+ *
+ * @param maximum maximum value of the returned value
+ *
+ * @return a 16 bits value in [0..maximum]
+ */
+uint16_t futils_randomr16_maximum(uint16_t maximum);
+
+/**
+ * @brief Get a random uint32_t up to a maximum
+ *
+ * @param maximum maximum value of the returned value
+ *
+ * @return a 32 bits value in [0..maximum]
+ */
+uint32_t futils_randomr32_maximum(uint32_t maximum);
+
+/**
+ * @brief Get a random uint64_t up to a maximum
+ *
+ * @param maximum maximum value of the returned value
+ *
+ * @return a 64 bits value in [0..maximum]
+ */
+uint64_t futils_randomr64_maximum(uint64_t maximum);
+
+/**
+ * @brief Fill a buffer with random bytes
+ *
+ * @param buffer buffer to fill
+ * @param len    number of bytes to fill
  *
  * @return 0 buffer filled with len random bytes
  * @return -EINVAL Invalid parameter

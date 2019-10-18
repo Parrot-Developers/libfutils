@@ -983,6 +983,93 @@ int futils_random_strong(void *buffer, size_t len)
 	return rand_fetch(buffer, len);
 }
 
+void futils_random(void *buffer, size_t len)
+{
+	struct pool *pool = pool_get();
+
+	pool_rand(pool, buffer, len);
+}
+
+uint8_t futils_randomr8(void)
+{
+	struct pool *pool = pool_get();
+	uint8_t val;
+
+	val = pool_rand8(pool);
+
+	return val;
+}
+
+uint16_t futils_randomr16(void)
+{
+	struct pool *pool = pool_get();
+	uint16_t val;
+
+	val = pool_rand16(pool);
+
+	return val;
+}
+
+uint32_t futils_randomr32(void)
+{
+	struct pool *pool = pool_get();
+	uint32_t val;
+
+	val = pool_rand32(pool);
+
+	return val;
+}
+
+uint64_t futils_randomr64(void)
+{
+	struct pool *pool = pool_get();
+	uint64_t val;
+
+	val = pool_rand64(pool);
+
+	return val;
+}
+
+uint8_t futils_randomr8_maximum(uint8_t maximum)
+{
+	struct pool *pool = pool_get();
+	uint8_t val;
+
+	val = pool_rand8_maximum(pool, maximum);
+
+	return val;
+}
+
+uint16_t futils_randomr16_maximum(uint16_t maximum)
+{
+	struct pool *pool = pool_get();
+	uint16_t val;
+
+	val = pool_rand16_maximum(pool, maximum);
+
+	return val;
+}
+
+uint32_t futils_randomr32_maximum(uint32_t maximum)
+{
+	struct pool *pool = pool_get();
+	uint32_t val;
+
+	val = pool_rand32_maximum(pool, maximum);
+
+	return val;
+}
+
+uint64_t futils_randomr64_maximum(uint64_t maximum)
+{
+	struct pool *pool = pool_get();
+	uint64_t val;
+
+	val = pool_rand64_maximum(pool, maximum);
+
+	return val;
+}
+
 int futils_random_bytes(void *buffer, size_t len)
 {
 	struct pool *pool = pool_get();
