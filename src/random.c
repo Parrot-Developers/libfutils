@@ -31,6 +31,10 @@
 
 #ifdef _WIN32
 #  define _CRT_RAND_S
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  include <ntsecapi.h>
+#  define HAVE_RTLGENRANDOM 1
 #endif  /* _WIN32 */
 
 #include "futils/random.h"
@@ -50,6 +54,14 @@ int futils_random_bytes(void *buffer, size_t len)
 	uint8_t *p = buffer;
 	int ret = 0;
 	unsigned int val = 0;
+
+#ifdef HAVE_RTLGENRANDOM
+	if (!RtlGenRandom(buffer, len))
+		ULOGE("RtlGenRandom");
+	else
+		return 0;
+#endif
+
 	while (len) {
 		size_t chunk = sizeof(val);
 		if (chunk > len)
