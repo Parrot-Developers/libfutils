@@ -82,6 +82,10 @@
  */
 #ifdef __COVERITY__
 #  define FUTILS_STATIC_ASSERT(x, msg)
+#elif __STDC_VERSION__ >= 201112L
+# include <assert.h>
+#  define FUTILS_STATIC_ASSERT(x, msg) \
+	static_assert(x, msg)
 #else
 #  define FUTILS_STATIC_ASSERT(x, msg) \
 	/* codecheck_ignore[NEW_TYPEDEFS] */ \
