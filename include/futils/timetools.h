@@ -93,6 +93,24 @@ int time_timespec_to_ns(const struct timespec *value, uint64_t *ns);
 int time_timespec_to_us(const struct timespec *value, uint64_t *us);
 
 /**
+ * @brief Convert a timespec value to uint64_t in msec.
+ *
+ * @param value timespec value
+ * @param ms pointer to msec filled by function on success
+ * @return 0 on success, negative errno value on errors
+ */
+int time_timespec_to_ms(const struct timespec *value, uint64_t *ms);
+
+/**
+ * @brief Convert a uint64_t value in msec into a timespec value.
+ *
+ * @param value uint64_t value, measured in ms
+ * @param ts pointer to timespec structure filled by function on success
+ * @return 0 on success, negative errno value on errors
+ */
+int time_ms_to_timespec(const uint64_t *value, struct timespec *ts);
+
+/**
  * @brief Convert a uint64_t value in usec into a timespec value.
  *
  * @param value uint64_t value, measured in us

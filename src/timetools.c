@@ -198,6 +198,15 @@ int time_timespec_to_ns(const struct timespec *value, uint64_t *ns)
 	return 0;
 }
 
+int time_timespec_to_ms(const struct timespec *value, uint64_t *ms)
+{
+	if (!value || !ms)
+		return -EINVAL;
+
+	*ms = (uint64_t)value->tv_sec * 1000UL + (value->tv_nsec / 1000000UL);
+	return 0;
+}
+
 int time_timespec_to_us(const struct timespec *value, uint64_t *us)
 {
 	if (!value || !us)
@@ -224,6 +233,16 @@ int time_us_to_timespec(const uint64_t *value, struct timespec *ts)
 
 	ts->tv_sec = *value / 1000000UL;
 	ts->tv_nsec = (*value % 1000000UL) * 1000UL;
+	return 0;
+}
+
+int time_ms_to_timespec(const uint64_t *value, struct timespec *ts)
+{
+	if (!value || !ts)
+		return -EINVAL;
+
+	ts->tv_sec = *value / 1000UL;
+	ts->tv_nsec = (*value % 1000UL) * 1000000UL;
 	return 0;
 }
 
