@@ -133,105 +133,8 @@ uint64_t futils_randomr64_maximum(uint64_t maximum);
  *
  * @return 0 buffer filled with len random bytes
  * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
  */
-int futils_random_bytes(void *buffer, size_t len);
-
-/**
- * @brief Get a random uint8_t
- *
- * @param val pointer to randomize
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random8(uint8_t *val);
-
-/**
- * @brief Get a random uint16_t
- *
- * @param val pointer to randomize
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random16(uint16_t *val);
-
-/**
- * @brief Get a random uint32_t
- *
- * @param val pointer to randomize
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random32(uint32_t *val);
-
-/**
- * @brief Get a random uint64_t
- *
- * @param val pointer to randomize
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random64(uint64_t *val);
-
-/**
- * @brief Get a random uint8_t up to a maximum
- *
- * @param val pointer to the returned 8 bits value in [0..maximum]
- * @param maximum maximum value of the returned value
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random8_maximum(uint8_t *val, uint8_t maximum);
-
-/**
- * @brief Get a random uint16_t up to a maximum
- *
- * @param val pointer to the returned 16 bits value in [0..maximum]
- * @param maximum maximum value of the returned value
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random16_maximum(uint16_t *val, uint16_t maximum);
-
-/**
- * @brief Get a random uint32_t up to a maximum
- *
- * @param val pointer to the returned 32 bits value in [0..maximum]
- * @param maximum maximum value of the returned value
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random32_maximum(uint32_t *val, uint32_t maximum);
-
-/**
- * @brief Get a random uint64_t up to a maximum
- *
- * @param val pointer to the returned 64 bits value in [0..maximum]
- * @param maximum maximum value of the returned value
- *
- * @return 0 val contains a random value
- * @return -EINVAL Invalid parameter
- * @return other negative errno on internal error
- */
-int futils_random64_maximum(uint64_t *val, uint64_t maximum);
-
-/* inline versions of the above */
-
-static inline int __futils_random_bytes(void *buffer, size_t len)
+static inline int futils_random_bytes(void *buffer, size_t len)
 {
 	if (!buffer || !len)
 		return -EINVAL;
@@ -241,7 +144,15 @@ static inline int __futils_random_bytes(void *buffer, size_t len)
 	return 0;
 }
 
-static inline int __futils_random8(uint8_t *val)
+/**
+ * @brief Get a random uint8_t
+ *
+ * @param val pointer to randomize
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random8(uint8_t *val)
 {
 	if (!val)
 		return -EINVAL;
@@ -251,7 +162,15 @@ static inline int __futils_random8(uint8_t *val)
 	return 0;
 }
 
-static inline int __futils_random16(uint16_t *val)
+/**
+ * @brief Get a random uint16_t
+ *
+ * @param val pointer to randomize
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random16(uint16_t *val)
 {
 	if (!val)
 		return -EINVAL;
@@ -261,7 +180,15 @@ static inline int __futils_random16(uint16_t *val)
 	return 0;
 }
 
-static inline int __futils_random32(uint32_t *val)
+/**
+ * @brief Get a random uint32_t
+ *
+ * @param val pointer to randomize
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random32(uint32_t *val)
 {
 	if (!val)
 		return -EINVAL;
@@ -271,7 +198,15 @@ static inline int __futils_random32(uint32_t *val)
 	return 0;
 }
 
-static inline int __futils_random64(uint64_t *val)
+/**
+ * @brief Get a random uint64_t
+ *
+ * @param val pointer to randomize
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random64(uint64_t *val)
 {
 	if (!val)
 		return -EINVAL;
@@ -281,7 +216,16 @@ static inline int __futils_random64(uint64_t *val)
 	return 0;
 }
 
-static inline int __futils_random8_maximum(uint8_t *val, uint8_t maximum)
+/**
+ * @brief Get a random uint8_t up to a maximum
+ *
+ * @param val pointer to the returned 8 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random8_maximum(uint8_t *val, uint8_t maximum)
 {
 	if (!val)
 		return -EINVAL;
@@ -291,7 +235,16 @@ static inline int __futils_random8_maximum(uint8_t *val, uint8_t maximum)
 	return 0;
 }
 
-static inline int __futils_random16_maximum(uint16_t *val, uint16_t maximum)
+/**
+ * @brief Get a random uint16_t up to a maximum
+ *
+ * @param val pointer to the returned 16 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random16_maximum(uint16_t *val, uint16_t maximum)
 {
 	if (!val)
 		return -EINVAL;
@@ -301,7 +254,16 @@ static inline int __futils_random16_maximum(uint16_t *val, uint16_t maximum)
 	return 0;
 }
 
-static inline int __futils_random32_maximum(uint32_t *val, uint32_t maximum)
+/**
+ * @brief Get a random uint32_t up to a maximum
+ *
+ * @param val pointer to the returned 32 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random32_maximum(uint32_t *val, uint32_t maximum)
 {
 	if (!val)
 		return -EINVAL;
@@ -311,7 +273,16 @@ static inline int __futils_random32_maximum(uint32_t *val, uint32_t maximum)
 	return 0;
 }
 
-static inline int __futils_random64_maximum(uint64_t *val, uint64_t maximum)
+/**
+ * @brief Get a random uint64_t up to a maximum
+ *
+ * @param val pointer to the returned 64 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ */
+static inline int futils_random64_maximum(uint64_t *val, uint64_t maximum)
 {
 	if (!val)
 		return -EINVAL;
@@ -320,28 +291,6 @@ static inline int __futils_random64_maximum(uint64_t *val, uint64_t maximum)
 
 	return 0;
 }
-
-#define futils_random_bytes(buffer, len) __futils_random_bytes((buffer), (len))
-
-#define futils_random8(val) __futils_random8(val)
-
-#define futils_random16(val) __futils_random16(val)
-
-#define futils_random32(val) __futils_random32(val)
-
-#define futils_random64(val) __futils_random64(val)
-
-#define futils_random8_maximum(val, maximum) \
-	__futils_random8_maximum((val), (maximum))
-
-#define futils_random16_maximum(val, maximum) \
-	__futils_random16_maximum((val), (maximum))
-
-#define futils_random32_maximum(val, maximum) \
-	__futils_random32_maximum((val), (maximum))
-
-#define futils_random64_maximum(val, maximum) \
-	__futils_random64_maximum((val), (maximum))
 
 /**
  * @brief Fill a buffer with random hexadecimal characters
