@@ -71,10 +71,44 @@ ULOG_DECLARE_TAG(futils_random);
 #	include <pthread.h>
 #endif
 
+#if defined(__STDC_HOSTED__) && __STDC_HOSTED__ &&			\
+	defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L) &&     \
+	(!defined(__STDC_NO_THREADS__) || !__STDC_NO_THREADS__)
+#	include <stdatomic.h>
+#	define HAVE_STDATOMIC 1
+#elif defined(__GNUC__) && defined(__has_include)
+	/* codecheck_ignore[SPACING] */
+#	if __has_include(<stdatomic.h>)
+#		include <stdatomic.h>
+#		define HAVE_STDATOMIC 1
+#	endif
+#endif
+
 #if defined(__GLIBC__) && \
 	((__GLIBC__ > 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
 #include <sys/random.h>
 #define HAVE_GETRANDOM 1
+#endif
+
+#if !defined(HAVE_STDATOMIC) && defined(__GNUC__)
+
+#define ATOMIC_VAR_INIT(v) (v)
+
+/* codecheck_ignore[NEW_TYPEDEFS] */
+typedef unsigned int atomic_uint;
+
+#define memory_order_relaxed __ATOMIC_RELAXED
+
+static inline unsigned int atomic_load_explicit(atomic_uint *ptr, int mo)
+{
+	return __atomic_load_n(ptr, mo);
+}
+
+static inline unsigned int atomic_fetch_add_explicit(atomic_uint *ptr,
+						     unsigned int val, int mo)
+{
+	return __atomic_fetch_add(ptr, val, mo);
+}
 #endif
 
 /*
@@ -296,9 +330,12 @@ static int rand_fetch(void *buffer, size_t len);
 struct pool {
 	struct chacha chacha;
 	unsigned int seeded;
+	unsigned int era;
 	unsigned int available;
 	uint8_t buffer[512];
 };
+
+static atomic_uint seed_era = ATOMIC_VAR_INIT(1); /* current seed era */
 
 #ifdef HAVE_THREAD_LOCAL
 
@@ -335,7 +372,7 @@ static struct pool *pool_new(void)
 	if (!pool)
 		return NULL;
 
-	pool->seeded = 0;
+	pool->era = 0;
 	pool->available = 0;
 
 	return pool;
@@ -401,7 +438,21 @@ static inline void pool_buffer_consume(struct pool *pool,
 	pool->available -= len;
 }
 
-static int pool_seed(struct pool *pool)
+static inline unsigned int pool_seed_era(void)
+{
+	return atomic_load_explicit(&seed_era,
+				    memory_order_relaxed);
+}
+
+static inline unsigned int pool_seed_era_new(void)
+{
+	/* start a new era,
+	   then all threads will reseed as needed */
+	return atomic_fetch_add_explicit(&seed_era, 2,
+					 memory_order_relaxed) + 2;
+}
+
+static int pool_seed(struct pool *pool, unsigned int era)
 {
 	uint8_t key[CHACHA_KEY_NONCE_SIZE];
 	int err;
@@ -415,7 +466,8 @@ static int pool_seed(struct pool *pool)
 
 	chacha_init(&pool->chacha, key);
 
-	pool->seeded = 1;
+	pool->era = era;
+	pool->available = 0; /* discard current buffer */
 
 	memset(key, 0, sizeof(key));
 
@@ -424,11 +476,22 @@ static int pool_seed(struct pool *pool)
 
 static inline int pool_seed_if_needed(struct pool *pool)
 {
+	const unsigned int era = pool_seed_era();
+
 	/* seed if needed */
-	if (pool->seeded)
+	if (pool->era == era)
 		return 0;
 
-	return pool_seed(pool);
+	return pool_seed(pool, era);
+}
+
+static int pool_reseed(struct pool *pool)
+{
+	if (!pool)
+		return -ENOMEM;
+
+	return pool_seed(pool,
+			 pool_seed_era_new());
 }
 
 static void pool_reload(struct pool *pool)
@@ -1274,4 +1337,11 @@ release:
 		free(tmp);
 
 	return err;
+}
+
+int futils_random_reseed(void)
+{
+	struct pool *pool = pool_get();
+
+	return pool_reseed(pool);
 }

@@ -214,6 +214,20 @@ int futils_random_base64(void *buffer, size_t len, size_t count);
  */
 int futils_random_shuffle(void *base, size_t nmemb, size_t size);
 
+/**
+ * @brief Trigger reseeding pseudo random number generator
+ *
+ * Application relying on fork() should call this function
+ * in child process so that new process's PRNG will produce
+ * a different stream from its parent.
+ *
+ * This affects all functions using the PRNG, eg. all
+ * except futils_random_strong().
+ *
+ * @return 0 state is reseed
+ */
+int futils_random_reseed(void);
+
 #ifdef __cplusplus
 }
 #endif
