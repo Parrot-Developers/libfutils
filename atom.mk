@@ -18,7 +18,8 @@ LOCAL_SRC_FILES := \
 	src/mbox.c \
 	src/systimetools.c \
 	src/timetools.c \
-	src/random.c
+	src/random.c \
+	src/varint.c
 
 ifeq ("$(TARGET_OS)", "linux")
   LOCAL_SRC_FILES += src/inotify.c
@@ -49,7 +50,8 @@ LOCAL_SRC_FILES := \
 	tests/futils_test_list.c \
 	tests/futils_test_mbox.c \
 	tests/futils_test_random.c \
-	tests/futils_test_systimetools.c
+	tests/futils_test_systimetools.c \
+	tests/futils_test_varint.c
 
 LOCAL_LIBRARIES := libfutils libcunit
 
