@@ -95,6 +95,54 @@ int futils_random32(uint32_t *val);
  */
 int futils_random64(uint64_t *val);
 
+/**
+ * @brief Get a random uint8_t up to a maximum
+ *
+ * @param val pointer to the returned 8 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ */
+int futils_random8_maximum(uint8_t *val, uint8_t maximum);
+
+/**
+ * @brief Get a random uint16_t up to a maximum
+ *
+ * @param val pointer to the returned 16 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ */
+int futils_random16_maximum(uint16_t *val, uint16_t maximum);
+
+/**
+ * @brief Get a random uint32_t up to a maximum
+ *
+ * @param val pointer to the returned 32 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ */
+int futils_random32_maximum(uint32_t *val, uint32_t maximum);
+
+/**
+ * @brief Get a random uint64_t up to a maximum
+ *
+ * @param val pointer to the returned 64 bits value in [0..maximum]
+ * @param maximum maximum value of the returned value
+ *
+ * @return 0 val contains a random value
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ */
+int futils_random64_maximum(uint64_t *val, uint64_t maximum);
+
 #ifdef __cplusplus
 }
 #endif

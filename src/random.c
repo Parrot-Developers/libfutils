@@ -75,6 +75,81 @@ ULOG_DECLARE_TAG(futils_random);
 #define HAVE_GETRANDOM 1
 #endif
 
+/*
+ * return a power of 2 minus one number
+ * at least equal to parameter if parameter
+ * is not 0. return 0 otherwise
+ */
+static inline uint64_t p2minus1(uint64_t v)
+{
+	v |= (v >> 1);
+	v |= (v >> 2);
+	v |= (v >> 4);
+	v |= (v >> 8);
+	v |= (v >> 16);
+	v |= (v >> 32);
+
+	return v;
+}
+
+/*
+ * returns the number of bits required to
+ * represent 'v' aka. the position of its most
+ * significant bit set (with less significant
+ * bit starting at 1):
+ * 0b0000 -> 0
+ * 0b0001 -> 1
+ * 0b0010 -> 2
+ * 0b0011 -> 2
+ * 0b0100 -> 3
+ * ...
+ * 0b0111 -> 3
+ * 0b1000 -> 4
+ * ...
+ * 0b1111 -> 4
+ */
+static inline unsigned int ilog2plus1(uint64_t v)
+{
+	unsigned int r = 0;
+
+	if (v >= (UINT64_C(1) << 32)) {
+		r += 33;
+		v >>= 33;
+	}
+
+	if (v >= (UINT32_C(1) << 16)) {
+		r += 17;
+		v >>= 17;
+	}
+
+	if (v >= (UINT16_C(1) << 8)) {
+		r += 9;
+		v >>= 9;
+	}
+
+	if (v >= (UINT8_C(1) << 4)) {
+		r += 5;
+		v >>= 5;
+	}
+
+	if (v >= (UINT8_C(1) << 2)) {
+		r += 3;
+		v >>= 3;
+	}
+
+	if (v >= (UINT8_C(1) << 1)) {
+		r += 2;
+		v >>= 2;
+	}
+
+	if (v >= (UINT8_C(1) << 0)) {
+		r += 1;
+		v >>= 1;
+	}
+
+	return r;
+}
+
 static int rand_fetch(void *buffer, size_t len);
 
 struct pool {
@@ -259,14 +334,312 @@ static int pool_rand16(struct pool *pool, uint16_t *out)
 	return pool_rand(pool, out, sizeof(*out));
 }
 
+static int pool_rand24(struct pool *pool, uint32_t *out)
+{
+	uint8_t bytes[3];
+	int err;
+
+	err = pool_rand(pool, bytes, sizeof(bytes));
+	if (err < 0)
+		return err;
+
+	*out = 0;
+	*out |= (uint32_t)bytes[0] << 0;
+	*out |= (uint32_t)bytes[1] << 8;
+	*out |= (uint32_t)bytes[2] << 16;
+
+	return 0;
+}
+
 static int pool_rand32(struct pool *pool, uint32_t *out)
 {
 	return pool_rand(pool, out, sizeof(*out));
 }
 
+static int pool_rand40(struct pool *pool, uint64_t *out)
+{
+	uint8_t bytes[5];
+	int err;
+
+	err = pool_rand(pool, bytes, sizeof(bytes));
+	if (err < 0)
+		return err;
+
+	*out = 0;
+	*out |= (uint64_t)bytes[0] << 0;
+	*out |= (uint64_t)bytes[1] << 8;
+	*out |= (uint64_t)bytes[2] << 16;
+	*out |= (uint64_t)bytes[3] << 24;
+	*out |= (uint64_t)bytes[4] << 32;
+
+	return 0;
+}
+
+static int pool_rand48(struct pool *pool, uint64_t *out)
+{
+	uint8_t bytes[6];
+	int err;
+
+	err = pool_rand(pool, bytes, sizeof(bytes));
+	if (err < 0)
+		return err;
+
+	*out = 0;
+	*out |= (uint64_t)bytes[0] << 0;
+	*out |= (uint64_t)bytes[1] << 8;
+	*out |= (uint64_t)bytes[2] << 16;
+	*out |= (uint64_t)bytes[3] << 24;
+	*out |= (uint64_t)bytes[4] << 32;
+	*out |= (uint64_t)bytes[5] << 40;
+
+	return 0;
+}
+
+static int pool_rand56(struct pool *pool, uint64_t *out)
+{
+	uint8_t bytes[7];
+	int err;
+
+	err = pool_rand(pool, bytes, sizeof(bytes));
+	if (err < 0)
+		return err;
+
+	*out = 0;
+	*out |= (uint64_t)bytes[0] << 0;
+	*out |= (uint64_t)bytes[1] << 8;
+	*out |= (uint64_t)bytes[2] << 16;
+	*out |= (uint64_t)bytes[3] << 24;
+	*out |= (uint64_t)bytes[4] << 32;
+	*out |= (uint64_t)bytes[5] << 40;
+	*out |= (uint64_t)bytes[6] << 48;
+
+	return 0;
+}
+
 static int pool_rand64(struct pool *pool, uint64_t *out)
 {
 	return pool_rand(pool, out, sizeof(*out));
+}
+
+#define _pool_rand_maximum(pool, bits, maximum, mask, out, err) do {	\
+	*(err) = 0;							\
+	do {								\
+		*(err) = pool_rand ## bits((pool), (out));		\
+		if (*(err) < 0)						\
+			break;						\
+		*(out) &= (mask);					\
+	} while (*(out) > (maximum));					\
+} while (0)
+
+static int _pool_rand8_maximum(struct pool *pool,
+			       uint8_t maximum, uint8_t mask, uint8_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 8, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand16_maximum(struct pool *pool,
+				uint16_t maximum, uint16_t mask, uint16_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 16, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand24_maximum(struct pool *pool,
+				uint32_t maximum, uint32_t mask, uint32_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 24, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand32_maximum(struct pool *pool,
+				uint32_t maximum, uint32_t mask, uint32_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 32, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand40_maximum(struct pool *pool,
+				uint64_t maximum, uint64_t mask, uint64_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 40, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand48_maximum(struct pool *pool,
+				uint64_t maximum, uint64_t mask, uint64_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 48, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand56_maximum(struct pool *pool,
+				uint64_t maximum, uint64_t mask, uint64_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 56, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int _pool_rand64_maximum(struct pool *pool,
+				uint64_t maximum, uint64_t mask, uint64_t *out)
+{
+	int err;
+
+	_pool_rand_maximum(pool, 64, maximum, mask, out, &err);
+
+	return err;
+}
+
+static int pool_rand8_maximum(struct pool *pool,
+			      uint8_t maximum, uint8_t *out)
+{
+	uint8_t mask = p2minus1(maximum);
+
+	return _pool_rand8_maximum(pool, maximum, mask, out);
+}
+
+static int pool_rand16_maximum(struct pool *pool,
+			       uint16_t maximum, uint16_t *out)
+{
+	unsigned int count;
+	uint16_t mask;
+	uint8_t u8;
+	int err = -EINVAL;
+
+	mask = p2minus1(maximum);
+	count = (ilog2plus1(mask) + 7) / 8;
+
+	switch (count) {
+	case 0:
+		*out = 0;
+		err = 0;
+		break;
+	case 1:
+		err = _pool_rand8_maximum(pool, maximum, mask, &u8);
+		if (!err)
+			*out = u8;
+		break;
+	case 2:
+		err = _pool_rand16_maximum(pool, maximum, mask, out);
+		break;
+	}
+
+	return err;
+}
+
+static int pool_rand32_maximum(struct pool *pool,
+			       uint32_t maximum, uint32_t *out)
+{
+	unsigned int count;
+	uint32_t mask;
+	uint16_t u16;
+	uint8_t u8;
+	int err = -EINVAL;
+
+	mask = p2minus1(maximum);
+	count = (ilog2plus1(mask) + 7) / 8;
+
+	switch (count) {
+	case 0:
+		*out = 0;
+		err = 0;
+		break;
+	case 1:
+		err = _pool_rand8_maximum(pool, maximum, mask, &u8);
+		if (!err)
+			*out = u8;
+		break;
+	case 2:
+		err = _pool_rand16_maximum(pool, maximum, mask, &u16);
+		if (!err)
+			*out = u16;
+		break;
+	case 3:
+		err = _pool_rand24_maximum(pool, maximum, mask, out);
+		break;
+
+	case 4:
+		err = _pool_rand32_maximum(pool, maximum, mask, out);
+		break;
+	}
+
+	return err;
+}
+
+static int pool_rand64_maximum(struct pool *pool,
+			       uint64_t maximum, uint64_t *out)
+{
+	unsigned int count;
+	uint64_t mask;
+	uint32_t u32;
+	uint16_t u16;
+	uint8_t u8;
+	int err = -EINVAL;
+
+	mask = p2minus1(maximum);
+	count = (ilog2plus1(mask) + 7) / 8;
+
+	switch (count) {
+	case 0:
+		*out = 0;
+		err = 0;
+		break;
+	case 1:
+		err = _pool_rand8_maximum(pool, maximum, mask, &u8);
+		if (!err)
+			*out = u8;
+		break;
+	case 2:
+		err = _pool_rand16_maximum(pool, maximum, mask, &u16);
+		if (!err)
+			*out = u16;
+		break;
+	case 3:
+		err = _pool_rand24_maximum(pool, maximum, mask, &u32);
+		if (!err)
+			*out = u32;
+		break;
+	case 4:
+		err = _pool_rand32_maximum(pool, maximum, mask, &u32);
+		if (!err)
+			*out = u32;
+		break;
+	case 5:
+		err = _pool_rand40_maximum(pool, maximum, mask, out);
+		break;
+	case 6:
+		err = _pool_rand48_maximum(pool, maximum, mask, out);
+		break;
+	case 7:
+		err = _pool_rand56_maximum(pool, maximum, mask, out);
+		break;
+	case 8:
+		err = _pool_rand64_maximum(pool, maximum, mask, out);
+		break;
+	}
+
+	return err;
 }
 
 static int rand_fetch(void *buffer, size_t len)
@@ -414,4 +787,44 @@ int futils_random64(uint64_t *val)
 		return -EINVAL;
 
 	return pool_rand64(pool, val);
+}
+
+int futils_random8_maximum(uint8_t *val, uint8_t maximum)
+{
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand8_maximum(pool, maximum, val);
+}
+
+int futils_random16_maximum(uint16_t *val, uint16_t maximum)
+{
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand16_maximum(pool, maximum, val);
+}
+
+int futils_random32_maximum(uint32_t *val, uint32_t maximum)
+{
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand32_maximum(pool, maximum, val);
+}
+
+int futils_random64_maximum(uint64_t *val, uint64_t maximum)
+{
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand64_maximum(pool, maximum, val);
 }

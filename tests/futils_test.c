@@ -37,6 +37,7 @@ extern CU_TestInfo s_mbox_tests[];
 extern CU_TestInfo s_dynmbox_tests[];
 extern CU_TestInfo s_systimetools_tests[];
 extern CU_TestInfo s_list_tests[];
+extern CU_TestInfo s_random_tests[];
 
 static void test_bound(void)
 {
@@ -63,6 +64,7 @@ static CU_SuiteInfo s_suites[] = {
 	{(char *)"dynmbox", NULL, NULL, s_dynmbox_tests},
 	{(char *)"systimetools", NULL, NULL, s_systimetools_tests},
 	{(char *)"list", NULL, NULL, s_list_tests},
+	{(char *)"random", NULL, NULL, s_random_tests},
 	CU_SUITE_INFO_NULL,
 };
 
