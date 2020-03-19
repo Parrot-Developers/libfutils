@@ -165,6 +165,29 @@ int futils_random64_maximum(uint64_t *val, uint64_t maximum);
  */
 int futils_random_base16(void *buffer, size_t len, size_t count);
 
+/**
+ * @brief Fill a buffer with random base64 characters
+ *
+ * @param buffer      buffer to fill
+ * @param len         buffer length
+ * @param count       number of bytes to generate,
+ *                    bytes number is rounded up to 3, then
+ *                    each 3 bytes slice will be translated
+ *                    to 4 base64 characters stored in buffer.
+ *
+ * @return total number of random base64 characters that would
+ *         have been written to buffer if len was large enough
+ *         to hold ((count + 2) / 3 * 4) + 1 characters;
+ *         see snprintf().
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ *
+ * @note truncation will happen if len is less than
+ *       ((count + 2) / 3 * 4) + 1;
+ *       generated string is NUL terminated if len > 0
+ */
+int futils_random_base64(void *buffer, size_t len, size_t count);
+
 #ifdef __cplusplus
 }
 #endif

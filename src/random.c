@@ -888,3 +888,100 @@ int futils_random_base16(void *buffer, size_t len, size_t count)
 leave:
 	return count * 2;
 }
+
+int futils_random_base64(void *buffer, size_t len, size_t count)
+{
+	/* catch size_t overflow */
+	ULOG_ERRNO_RETURN_ERR_IF(count > (SIZE_MAX - 2), EINVAL);
+	/* catch int overflow (while not triggering size_t overflow) */
+	ULOG_ERRNO_RETURN_ERR_IF((count + 2) / 3 > ((size_t)INT_MAX + 3) / 4,
+				 EINVAL);
+	ULOG_ERRNO_RETURN_ERR_IF(((count + 2) / 3) * 4 > INT_MAX, EINVAL);
+
+	static const char alphabet[] =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"abcdefghijklmnopqrstuvwxyz"
+		"0123456789"
+		"+/";
+
+	struct pool *pool = pool_get();
+	uint8_t *p = buffer;
+	size_t ps = ((count + 2) / 3) * 4;
+
+	size_t c = count;
+
+	char b[4]; /* 4 * 6 bits for 3 * 8 bits */
+	size_t bs;
+
+	if (!len)
+		goto leave;
+
+	if (ps > (len - 1))
+		ps = (len - 1);
+
+	while (c >= 3 && ps) {
+
+		uint32_t v;
+		int err;
+
+		err = pool_rand32(pool, &v);
+		if (err < 0)
+			return err;
+
+		b[0] = alphabet[(v >>  0) & 63];
+		b[1] = alphabet[(v >>  6) & 63];
+		b[2] = alphabet[(v >> 12) & 63];
+		b[3] = alphabet[(v >> 18) & 63];
+
+		bs = 4;
+		if (bs > ps)
+			bs = ps;
+
+		memcpy(p, b, bs);
+		p += bs;
+		ps -= bs;
+
+		c -= 3;
+	}
+
+	/* last blob can end with one or two padding characters */
+	if (c && ps) {
+
+		uint32_t v;
+		int err;
+
+		err = pool_rand32(pool, &v);
+		if (err < 0)
+			return err;
+
+		b[0] = alphabet[(v >> 0) & 63];
+		b[1] = alphabet[(v >> 6) & 63];
+
+		switch (c) {
+		case 2:
+			b[2] = alphabet[(v >> 12) & 63];
+			break;
+		case 1:
+			b[2] = '=';
+			break;
+		}
+
+		b[3] = '=';
+
+		bs = 4;
+		if (bs > ps)
+			bs = ps;
+
+		memcpy(p, b, bs);
+		p += bs;
+		ps -= bs;
+
+		c = 0;
+	}
+
+	/* NUL terminate string */
+	*p = '\0';
+
+leave:
+	return ((count + 2) / 3) * 4;
+}
