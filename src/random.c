@@ -43,6 +43,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -827,4 +828,63 @@ int futils_random64_maximum(uint64_t *val, uint64_t maximum)
 		return -EINVAL;
 
 	return pool_rand64_maximum(pool, maximum, val);
+}
+
+int futils_random_base16(void *buffer, size_t len, size_t count)
+{
+	/* catch int overflow (while not triggering size_t overflow) */
+	ULOG_ERRNO_RETURN_ERR_IF(count > (((size_t)INT_MAX + 1) / 2), EINVAL);
+	ULOG_ERRNO_RETURN_ERR_IF((count * 2) > INT_MAX, EINVAL);
+
+	static const char alphabet[] = "0123456789abcdef";
+
+	struct pool *pool = pool_get();
+	uint8_t *p = buffer;
+	size_t ps = count * 2;
+
+	if (!len)
+		goto leave;
+
+	if (ps > (len - 1))
+		ps = (len - 1);
+
+	while (ps >= 16) {
+		uint64_t v;
+		size_t i;
+		int err;
+
+		err = pool_rand64(pool, &v);
+		if (err < 0)
+			return err;
+
+		for (i = 0; i < 16; i++) {
+			*p = alphabet[v & 15];
+			v >>= 4;
+			p++;
+			ps--;
+		}
+	}
+
+	if (ps) {
+		uint64_t v;
+		size_t i;
+		int err;
+
+		err = pool_rand64(pool, &v);
+		if (err < 0)
+			return err;
+
+		for (i = 0; i < ps; i++) {
+			*p = alphabet[v & 15];
+			v >>= 4;
+			p++;
+		}
+		ps = 0;
+	}
+
+	/* NUL terminate string */
+	*p = '\0';
+
+leave:
+	return count * 2;
 }

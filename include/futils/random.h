@@ -143,6 +143,28 @@ int futils_random32_maximum(uint32_t *val, uint32_t maximum);
  */
 int futils_random64_maximum(uint64_t *val, uint64_t maximum);
 
+/**
+ * @brief Fill a buffer with random hexadecimal characters
+ *
+ * @param buffer buffer to fill
+ * @param len    buffer length
+ * @param count  number of bytes to generate,
+ *               each byte is translated to 2 hexadecimal
+ *               characters stored in buffer.
+ *
+ * @return total number of random hexadecimal characters that
+ *         would have been written to buffer if len was large
+ *         enough to hold (count * 2) + 1 characters;
+ *         see snprintf().
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ *
+ * @note truncation will happen if len is less than
+ *       (count * 2) + 1;
+ *       generated string is NUL terminated if len > 0
+ */
+int futils_random_base16(void *buffer, size_t len, size_t count);
+
 #ifdef __cplusplus
 }
 #endif
