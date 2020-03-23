@@ -1070,6 +1070,17 @@ uint64_t futils_randomr64_maximum(uint64_t maximum)
 	return val;
 }
 
+/* compatibility symbols */
+#undef futils_random_bytes
+#undef futils_random8
+#undef futils_random16
+#undef futils_random32
+#undef futils_random64
+#undef futils_random8_maximum
+#undef futils_random16_maximum
+#undef futils_random32_maximum
+#undef futils_random64_maximum
+
 int futils_random_bytes(void *buffer, size_t len)
 {
 	struct pool *pool = pool_get();

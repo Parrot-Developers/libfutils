@@ -33,6 +33,7 @@
 #ifndef _FUTILS_RANDOM_H_
 #define _FUTILS_RANDOM_H_
 
+#include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -227,6 +228,120 @@ int futils_random32_maximum(uint32_t *val, uint32_t maximum);
  * @return other negative errno on internal error
  */
 int futils_random64_maximum(uint64_t *val, uint64_t maximum);
+
+/* inline versions of the above */
+
+static inline int __futils_random_bytes(void *buffer, size_t len)
+{
+	if (!buffer || !len)
+		return -EINVAL;
+
+	futils_random(buffer, len);
+
+	return 0;
+}
+
+static inline int __futils_random8(uint8_t *val)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr8();
+
+	return 0;
+}
+
+static inline int __futils_random16(uint16_t *val)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr16();
+
+	return 0;
+}
+
+static inline int __futils_random32(uint32_t *val)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr32();
+
+	return 0;
+}
+
+static inline int __futils_random64(uint64_t *val)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr64();
+
+	return 0;
+}
+
+static inline int __futils_random8_maximum(uint8_t *val, uint8_t maximum)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr8_maximum(maximum);
+
+	return 0;
+}
+
+static inline int __futils_random16_maximum(uint16_t *val, uint16_t maximum)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr16_maximum(maximum);
+
+	return 0;
+}
+
+static inline int __futils_random32_maximum(uint32_t *val, uint32_t maximum)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr32_maximum(maximum);
+
+	return 0;
+}
+
+static inline int __futils_random64_maximum(uint64_t *val, uint64_t maximum)
+{
+	if (!val)
+		return -EINVAL;
+
+	*val = futils_randomr64_maximum(maximum);
+
+	return 0;
+}
+
+#define futils_random_bytes(buffer, len) __futils_random_bytes((buffer), (len))
+
+#define futils_random8(val) __futils_random8(val)
+
+#define futils_random16(val) __futils_random16(val)
+
+#define futils_random32(val) __futils_random32(val)
+
+#define futils_random64(val) __futils_random64(val)
+
+#define futils_random8_maximum(val, maximum) \
+	__futils_random8_maximum((val), (maximum))
+
+#define futils_random16_maximum(val, maximum) \
+	__futils_random16_maximum((val), (maximum))
+
+#define futils_random32_maximum(val, maximum) \
+	__futils_random32_maximum((val), (maximum))
+
+#define futils_random64_maximum(val, maximum) \
+	__futils_random64_maximum((val), (maximum))
 
 /**
  * @brief Fill a buffer with random hexadecimal characters
