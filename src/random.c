@@ -249,6 +249,26 @@ static int pool_rand(struct pool *pool, void *buffer, size_t len)
 	return 0;
 }
 
+static int pool_rand8(struct pool *pool, uint8_t *out)
+{
+	return pool_rand(pool, out, sizeof(*out));
+}
+
+static int pool_rand16(struct pool *pool, uint16_t *out)
+{
+	return pool_rand(pool, out, sizeof(*out));
+}
+
+static int pool_rand32(struct pool *pool, uint32_t *out)
+{
+	return pool_rand(pool, out, sizeof(*out));
+}
+
+static int pool_rand64(struct pool *pool, uint64_t *out)
+{
+	return pool_rand(pool, out, sizeof(*out));
+}
+
 static int rand_fetch(void *buffer, size_t len)
 {
 #ifdef _WIN32
@@ -358,20 +378,40 @@ int futils_random_bytes(void *buffer, size_t len)
 
 int futils_random8(uint8_t *val)
 {
-	return futils_random_bytes(val, sizeof(*val));
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand8(pool, val);
 }
 
 int futils_random16(uint16_t *val)
 {
-	return futils_random_bytes(val, sizeof(*val));
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand16(pool, val);
 }
 
 int futils_random32(uint32_t *val)
 {
-	return futils_random_bytes(val, sizeof(*val));
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand32(pool, val);
 }
 
 int futils_random64(uint64_t *val)
 {
-	return futils_random_bytes(val, sizeof(*val));
+	struct pool *pool = pool_get();
+
+	if (!val)
+		return -EINVAL;
+
+	return pool_rand64(pool, val);
 }
