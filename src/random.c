@@ -48,6 +48,12 @@
 #include <ulog.h>
 ULOG_DECLARE_TAG(futils_random);
 
+#if defined(__GLIBC__) && \
+	((__GLIBC__ > 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
+#include <sys/random.h>
+#define HAVE_GETRANDOM 1
+#endif
+
 int futils_random_bytes(void *buffer, size_t len)
 {
 #ifdef _WIN32
@@ -87,6 +93,32 @@ int futils_random_bytes(void *buffer, size_t len)
 
 	if (!buffer || len == 0)
 		return -EINVAL;
+
+#ifdef HAVE_GETRANDOM
+	while (len) {
+		rd = getrandom(p, len, GRND_NONBLOCK);
+		if (rd < 0) {
+			if (errno == EINTR)
+				continue;
+			if (errno == ENOSYS)
+				break;
+
+			ULOG_ERRNO("getrandom()", errno);
+			break;
+		}
+
+		if (rd == 0) {
+			ULOGW("no bytes returned by getrandom(), ignoring");
+			break;
+		}
+
+		p += (size_t)rd;
+		len -= (size_t)rd;
+	}
+
+	if (len == 0)
+		return 0;
+#endif
 
 	fd = open("/dev/urandom", O_RDONLY | O_NONBLOCK);
 	if (fd < 0) {
