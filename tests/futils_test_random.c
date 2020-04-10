@@ -341,6 +341,147 @@ static void test_random_base64(void)
 		}
 }
 
+static void test_random_shuffle(void)
+{
+	uint8_t source8[8];
+	uint8_t shuffled8[8];
+	uint8_t results8[8];
+	uint8_t result8;
+	uint16_t source16[16];
+	uint16_t shuffled16[16];
+	uint16_t results16[16];
+	uint16_t result16;
+	uint32_t source32[32];
+	uint32_t shuffled32[32];
+	uint32_t results32[32];
+	uint32_t result32;
+	uint64_t source64[64];
+	uint64_t shuffled64[64];
+	uint64_t results64[64];
+	uint64_t result64;
+	unsigned int attempts;
+	unsigned int i;
+
+	/* 8bits */
+	for (i = 0; i < 8; i++) {
+		source8[i] = UINT8_C(1) << i;
+		results8[i] = 0;
+	}
+
+	/* They're N! possible random permutations
+	   with N in {8, 16, 32, 64}, too many to be
+	   tested. Hopefully this can be reduced with
+	   the coupon collector's problem: at one place,
+	   every possible values must be obtained. And
+	   each place is considered a seperate collection. */
+	for (attempts = 0; attempts < 21 * 8 * 1024; attempts++) {
+
+		memcpy(shuffled8, source8, sizeof(source8));
+
+		futils_random_shuffle(shuffled8, 8, sizeof(uint8_t));
+
+		for (i = 0; i < 8; i++)
+			results8[i] |= shuffled8[i];
+
+		/* if every items were shuffled at least one time
+		 * in each positions, then each resultsN[i] should
+		 * have every bits set after some attempts, and
+		 * 'resultN' would keep every of its bits set,
+		 * meaning futils_random_shuffle() is producing
+		 * every combinations, so the test is successful,
+		 * ... regardless of the probability of each
+		 * combination which is not verified here.
+		 */
+		result8 = UINT8_MAX;
+
+		for (i = 0; i < 8; i++)
+			result8 &= results8[i];
+
+		if (result8 == UINT8_MAX)
+			break;
+	}
+
+	CU_ASSERT_EQUAL(result8, UINT8_MAX);
+
+	/* 16bits */
+	for (i = 0; i < 16; i++) {
+		source16[i] = UINT16_C(1) << i;
+		results16[i] = 0;
+	}
+
+	for (attempts = 0; attempts < 54 * 16 * 1024; attempts++) {
+
+		memcpy(shuffled16, source16, sizeof(source16));
+
+		futils_random_shuffle(shuffled16, 16, sizeof(uint16_t));
+
+		for (i = 0; i < 16; i++)
+			results16[i] |= shuffled16[i];
+
+		result16 = UINT16_MAX;
+
+		for (i = 0; i < 16; i++)
+			result16 &= results16[i];
+
+		if (result16 == UINT16_MAX)
+			break;
+	}
+
+	CU_ASSERT_EQUAL(result16, UINT16_MAX);
+
+	/* 32bits */
+	for (i = 0; i < 32; i++) {
+		source32[i] = UINT32_C(1) << i;
+		results32[i] = 0;
+	}
+
+	for (attempts = 0; attempts < 129 * 32 * 1024; attempts++) {
+
+		memcpy(shuffled32, source32, sizeof(source32));
+
+		futils_random_shuffle(shuffled32, 32, sizeof(uint32_t));
+
+		for (i = 0; i < 32; i++)
+			results32[i] |= shuffled32[i];
+
+		result32 = UINT32_MAX;
+
+		for (i = 0; i < 32; i++)
+			result32 &= results32[i];
+
+		if (result32 == UINT32_MAX)
+			break;
+	}
+
+	CU_ASSERT_EQUAL(result32, UINT32_MAX);
+
+	/* 64bits */
+	for (i = 0; i < 64; i++) {
+		source64[i] = UINT64_C(1) << i;
+		results64[i] = 0;
+	}
+
+	for (attempts = 0; attempts < 303 * 64 * 1024; attempts++) {
+
+		memcpy(shuffled64, source64, sizeof(source64));
+
+		futils_random_shuffle(shuffled64, 64, sizeof(uint64_t));
+
+		for (i = 0; i < 64; i++)
+			results64[i] |= shuffled64[i];
+
+		result64 = UINT64_MAX;
+
+		for (i = 0; i < 64; i++)
+			result64 &= results64[i];
+
+		if (result64 == UINT64_MAX)
+			break;
+	}
+
+	CU_ASSERT_EQUAL(result64, UINT64_MAX);
+}
+
 CU_TestInfo s_random_tests[] = {
 	{(char *)"random8 maximum", &test_random8_maximum},
 	{(char *)"random16 maximum", &test_random16_maximum},
@@ -348,5 +489,6 @@ CU_TestInfo s_random_tests[] = {
 	{(char *)"random64 maximum", &test_random64_maximum},
 	{(char *)"random base16", &test_random_base16},
 	{(char *)"random base64", &test_random_base64},
+	{(char *)"random shuffle", &test_random_shuffle},
 	CU_TEST_INFO_NULL,
 };

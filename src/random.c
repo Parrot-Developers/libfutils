@@ -643,6 +643,33 @@ static int pool_rand64_maximum(struct pool *pool,
 	return err;
 }
 
+static int pool_rand_size_maximum(struct pool *pool,
+				  size_t maximum, size_t *out)
+{
+	int err;
+
+#if SIZE_MAX == UINT32_MAX
+	uint32_t val;
+
+	err = pool_rand32_maximum(pool, maximum, &val);
+
+#elif SIZE_MAX == UINT64_MAX
+	uint64_t val;
+
+	err = pool_rand64_maximum(pool, maximum, &val);
+
+#else
+#error No known size for size_t
+#endif
+
+	if (err < 0)
+		return err;
+
+	*out = (size_t)val;
+
+	return 0;
+}
+
 static int rand_fetch(void *buffer, size_t len)
 {
 #ifdef _WIN32
@@ -984,4 +1011,62 @@ int futils_random_base64(void *buffer, size_t len, size_t count)
 
 leave:
 	return ((count + 2) / 3) * 4;
+}
+
+int futils_random_shuffle(void *base, size_t nmemb, size_t size)
+{
+	struct pool *pool = pool_get();
+	uint8_t *p = base;
+	size_t u;
+	size_t v;
+	size_t r;
+	void *pu;
+	void *pv;
+	uint64_t tmpbuf;
+	void *tmp = &tmpbuf;
+	int err;
+
+	ULOG_ERRNO_RETURN_ERR_IF(base == NULL, EINVAL);
+
+	if (nmemb < 2)
+		return 0;
+
+	if (!size)
+		return 0;
+
+	if (size > sizeof(tmpbuf)) {
+		tmp = malloc(size);
+		if (!tmp)
+			return -errno;
+	}
+
+	for (u = 0; u < nmemb - 1; u++) {
+
+		r = 0;
+
+		err = pool_rand_size_maximum(pool,
+					     (nmemb - 1) - u, &r);
+		if (err < 0)
+			goto release;
+
+		if (r == 0)
+			continue;
+
+		v = u + r;
+
+		pu = p + u * size;
+		pv = p + v * size;
+
+		memcpy(tmp, pu, size);
+		memcpy(pu, pv, size);
+		memcpy(pv, tmp,  size);
+	}
+
+	err = 0;
+
+release:
+	if (tmp != &tmpbuf)
+		free(tmp);
+
+	return err;
 }

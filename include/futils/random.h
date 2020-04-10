@@ -188,6 +188,19 @@ int futils_random_base16(void *buffer, size_t len, size_t count);
  */
 int futils_random_base64(void *buffer, size_t len, size_t count);
 
+/**
+ * @brief Shuffle the items in an array
+ *
+ * @param base   array to shuffle
+ * @param nmemb  number of items in array
+ * @param size   size of each items in the array
+ *
+ * @return 0 in case of success
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ */
+int futils_random_shuffle(void *base, size_t nmemb, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
