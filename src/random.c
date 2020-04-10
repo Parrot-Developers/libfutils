@@ -34,7 +34,9 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <ntsecapi.h>
+#  ifdef _WIN64
 #  define HAVE_RTLGENRANDOM 1
+#  endif
 #endif  /* _WIN32 */
 
 #include "futils/random.h"
