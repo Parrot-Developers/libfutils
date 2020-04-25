@@ -191,6 +191,14 @@ int time_timeval_to_timespec(const struct timeval *tv, struct timespec *ts);
  */
 int time_timeval_to_ms(const struct timeval *value, uint32_t *ms);
 
+/**
+ * @brief Suspend execution of the calling thread
+ *
+ * @param ms milliseconds at least to wait
+ * @return 0 on success, negative errno value on errors
+ */
+int time_msleep(uint32_t ms);
+
 #ifdef __cplusplus
 }
 #endif

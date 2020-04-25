@@ -100,6 +100,7 @@ int time_get_monotonic(struct timespec *ts)
 
 #include <AmbaDataType.h>
 #include <AmbaUtility.h>
+#include <AmbaKAL.h>
 
 int time_get_monotonic(struct timespec *out)
 {
@@ -124,6 +125,31 @@ int time_get_monotonic(struct timespec *ts)
 	ret = clock_gettime(CLOCK_MONOTONIC, ts);
 	if (ret < 0)
 		return -errno;
+
+	return 0;
+}
+
+#endif
+
+#ifndef THREADX_OS
+
+int time_msleep(uint32_t ms)
+{
+	int ret;
+	struct timespec ts;
+	ts.tv_sec = ms / 1000;
+	ts.tv_nsec = (ms % 1000) * 1000000L;
+	ret = nanosleep(&ts, NULL);
+	if (ret < 0)
+		ret = -errno;
+	return ret;
+}
+
+#else
+
+int time_msleep(uint32_t ms)
+{
+	AmbaKAL_TaskSleep(ms);
 
 	return 0;
 }
