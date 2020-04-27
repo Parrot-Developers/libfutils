@@ -51,6 +51,7 @@ LOCAL_SRC_FILES := \
 	tests/futils_test_mbox.c \
 	tests/futils_test_random.c \
 	tests/futils_test_systimetools.c \
+	tests/futils_test_timetools.c \
 	tests/futils_test_varint.c
 
 LOCAL_LIBRARIES := libfutils libcunit
