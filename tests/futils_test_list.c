@@ -366,7 +366,6 @@ static void test_iter_safe(void)
 
 	struct list_node *node, *ntmp;
 	struct list_test_element *el, *etmp;
-	int count;
 
 	/* Remove elements when iterating */
 	reset_list(&list, elements, NB_TEST_ELEMENTS, 1);
