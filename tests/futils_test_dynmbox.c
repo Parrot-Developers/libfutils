@@ -294,7 +294,7 @@ static int send_and_receive_msg(struct dynmbox *box,
 	ret = dynmbox_push(box, src, msg_size);
 	CU_ASSERT_EQUAL_FATAL(ret, 0);
 
-	memset(dest, 0, SIZEOF_ARRAY(dest));
+	memset(dest, 0, msg_size);
 	ret = dynmbox_peek(box, dest);
 	CU_ASSERT_EQUAL_FATAL(ret, msg_size);
 
