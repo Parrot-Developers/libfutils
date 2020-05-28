@@ -146,8 +146,13 @@ static void test_dynmbox_push_smaller_than_pipe_buf(void)
 {
 	struct dynmbox *box;
 	int ret;
+	size_t i;
 	int msg[10];
 	size_t max_msg_size = sizeof(msg);
+
+	/* initialize buffer to push */
+	for (i = 0; i < SIZEOF_ARRAY(msg); i++)
+		msg[i] = i;
 
 	/* Create a box with a size smaller than PIPE_BUF */
 	CU_ASSERT_TRUE_FATAL(max_msg_size < PIPE_BUF);
@@ -177,9 +182,17 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 {
 	struct dynmbox *box1, *box2;
 	int ret;
+	size_t i;
 	char large_msg[PIPE_BUF + 1], very_large_msg[DYNMBOX_MAX_SIZE];
 	size_t large_msg_max_size = sizeof(large_msg);
 	size_t very_large_msg_max_size = sizeof(very_large_msg);
+
+	/* initialize buffers to push */
+	for (i = 0; i < SIZEOF_ARRAY(large_msg); i++)
+		large_msg[i] = i;
+
+	for (i = 0; i < SIZEOF_ARRAY(very_large_msg); i++)
+		very_large_msg[i] = i;
 
 	/* Create a box with a size larger than PIPE_BUF */
 	CU_ASSERT_TRUE_FATAL(large_msg_max_size > PIPE_BUF);
