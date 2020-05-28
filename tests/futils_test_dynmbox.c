@@ -258,8 +258,7 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 {
 	struct dynmbox *box;
-	int ret, error;
-	unsigned int i;
+	int ret;
 	int msg_sent[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 	int msg_read[10];
 	size_t max_msg_size = sizeof(msg_sent);
@@ -276,10 +275,7 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 	memset(msg_read, 0, sizeof(msg_read));
 	ret = dynmbox_peek(box, msg_read);
 	CU_ASSERT_EQUAL(ret, max_msg_size);
-	error = 0;
-	for (i = 0; i < ret / sizeof(msg_read[0]); i++)
-		error += msg_read[i]- msg_sent[i];
-	CU_ASSERT_EQUAL(error, 0);
+	CU_ASSERT_EQUAL(memcmp(msg_read, msg_sent, ret), 0);
 
 	/* Push a message of a smaller size : this should work */
 	ret = dynmbox_push(box, msg_sent, max_msg_size / 2);
@@ -288,10 +284,7 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 	memset(msg_read, 0, sizeof(msg_read));
 	ret = dynmbox_peek(box, msg_read);
 	CU_ASSERT_EQUAL(ret, max_msg_size / 2);
-	error = 0;
-	for (i = 0; i < ret / sizeof(msg_read[0]); i++)
-		error += msg_read[i]- msg_sent[i];
-	CU_ASSERT_EQUAL(error, 0);
+	CU_ASSERT_EQUAL(memcmp(msg_read, msg_sent, ret), 0);
 
 	dynmbox_destroy(box);
 }
@@ -301,8 +294,7 @@ static int send_and_receive_msg(struct dynmbox *box,
 				char *dest,
 				size_t msg_size)
 {
-	int ret, error;
-	unsigned int i;
+	int ret;
 
 	ret = dynmbox_push(box, src, msg_size);
 	CU_ASSERT_EQUAL_FATAL(ret, 0);
@@ -311,11 +303,7 @@ static int send_and_receive_msg(struct dynmbox *box,
 	ret = dynmbox_peek(box, dest);
 	CU_ASSERT_EQUAL_FATAL(ret, msg_size);
 
-	error = 0;
-	for (i = 0; i < ret / sizeof(dest[0]); i++)
-		error += dest[i]- src[i];
-
-	return error;
+	return memcmp(dest, src, ret);
 }
 
 static void test_dynmbox_peek_larger_than_pipe_buf(void)

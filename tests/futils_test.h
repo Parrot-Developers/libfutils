@@ -34,6 +34,7 @@
 
 #include <inttypes.h>
 #include <limits.h>
+#include <string.h>
 #include <unistd.h>
 #include "futils/futils.h"
 #include <CUnit/CUnit.h>
