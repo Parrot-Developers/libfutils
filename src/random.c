@@ -1070,6 +1070,28 @@ uint64_t futils_randomr64_maximum(uint64_t maximum)
 	return val;
 }
 
+double futils_randomrd(void)
+{
+	struct pool *pool = pool_get();
+	uint64_t val;
+
+	/* only 53bits are used */
+	val = pool_rand56(pool);
+
+	return (val >> 3) * 0x1.0p-53;
+}
+
+float futils_randomrf(void)
+{
+	struct pool *pool = pool_get();
+	uint32_t val;
+
+	/* only 24bits are used */
+	val = pool_rand24(pool);
+
+	return val * 0x1.0p-24;
+}
+
 int futils_random_string(char *buffer, size_t len,
 			 size_t count,
 			 const char *alphabet)

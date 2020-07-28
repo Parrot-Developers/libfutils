@@ -126,6 +126,28 @@ uint32_t futils_randomr32_maximum(uint32_t maximum);
 uint64_t futils_randomr64_maximum(uint64_t maximum);
 
 /**
+ * @brief Get a random double in the unit interval
+ *
+ * @return a double value in [0..1)
+ *
+ * @note in the [0..1) interval they're 2^53 uniformly
+ *       distributed values, and, except 0, they're all
+ *       multiples of 1.1102230246251565404236316680908203125*10^-16
+ */
+double futils_randomrd(void);
+
+/**
+ * @brief Get a random float in the unit interval
+ *
+ * @return a float value in [0..1)
+ *
+ * @note in the [0..1) interval, they're 2^24 uniformly
+ *       distributed values, and, except 0, they're all
+ *       multiples of 5.9604644775390625*10^-8
+ */
+float futils_randomrf(void);
+
+/**
  * @brief Fill a buffer with random bytes
  *
  * @param buffer buffer to fill

@@ -259,6 +259,76 @@ static void test_random64_maximum(void)
 	}
 }
 
+static void test_randomrd(void)
+{
+	const uint64_t expected_clear = 0;
+	const uint64_t expected_set = (UINT64_C(1) << 52) - 1;
+	uint64_t actual_clear = UINT64_MAX;
+	uint64_t actual_set = 0;
+	size_t i;
+
+	for (i = 0; i < 8192; i++) {
+		const union {
+			double d;
+			uint64_t u;
+		} val = { .d = futils_randomrd(), };
+
+		CU_ASSERT_TRUE(isfinite(val.d));
+		CU_ASSERT_TRUE(val.d >= 0.0);
+		CU_ASSERT_TRUE(val.d < 1.0);
+
+		/* remove exponent and sign,
+		   same as val.d * 0x1.0p+52 with val.d in [0..1) */
+		const uint64_t u = val.u & ((UINT64_C(1) << 52) - 1);
+
+		/* only check each bit of the mantissa is toggled */
+		actual_clear &= u;
+		actual_set |= u;
+
+		if (actual_clear == expected_clear &&
+		    actual_set == expected_set)
+			break;
+	}
+
+	CU_ASSERT_EQUAL_FATAL(actual_clear, expected_clear);
+	CU_ASSERT_EQUAL_FATAL(actual_set, expected_set);
+}
+
+static void test_randomrf(void)
+{
+	const uint32_t expected_clear = 0;
+	const uint32_t expected_set = (UINT32_C(1) << 23) - 1;
+	uint32_t actual_clear = UINT32_MAX;
+	uint32_t actual_set = 0;
+	size_t i;
+
+	for (i = 0; i < 8192; i++) {
+		const union {
+			float f;
+			uint32_t u;
+		} val = { .f = futils_randomrf(), };
+
+		CU_ASSERT_TRUE(isfinite(val.f));
+		CU_ASSERT_TRUE(val.f >= 0.0);
+		CU_ASSERT_TRUE(val.f < 1.0);
+
+		/* remove exponent and sign,
+		   same as val.f * 0x1.0p+23 with val.f in [0..1) */
+		const uint32_t u = val.u & ((UINT32_C(1) << 23) - 1);
+
+		/* only check each bit of the mantissa is toggled */
+		actual_clear &= u;
+		actual_set |= u;
+
+		if (actual_clear == expected_clear &&
+		    actual_set == expected_set)
+			break;
+	}
+
+	CU_ASSERT_EQUAL_FATAL(actual_clear, expected_clear);
+	CU_ASSERT_EQUAL_FATAL(actual_set, expected_set);
+}
+
 static void test_random_string(void)
 {
 	/* empty alphabet produce empty string */
@@ -656,6 +726,8 @@ CU_TestInfo s_random_tests[] = {
 	{(char *)"random16 maximum", &test_random16_maximum},
 	{(char *)"random32 maximum", &test_random32_maximum},
 	{(char *)"random64 maximum", &test_random64_maximum},
+	{(char *)"randomrd", &test_randomrd},
+	{(char *)"randomrf", &test_randomrf},
 	{(char *)"random string", &test_random_string},
 	{(char *)"random base16", &test_random_base16},
 	{(char *)"random base32", &test_random_base32},
