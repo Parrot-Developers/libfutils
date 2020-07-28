@@ -31,7 +31,7 @@
 
 #include "futils_test.h"
 
-// varint 16
+/* varint 16 */
 static const struct {
 	uint16_t val;
 	uint8_t data[3];
@@ -51,7 +51,7 @@ static void test_varint_u16(void)
 	uint16_t uval;
 	size_t i;
 
-	// error test
+	/* error test */
 	res = futils_varint_write_u16(NULL, sizeof(data),
 				      s_u16vals[0].val, &val_len);
 	CU_ASSERT_EQUAL(res, -EINVAL);
@@ -79,7 +79,7 @@ static void test_varint_u16(void)
 
 	size_t vals_cnt = SIZEOF_ARRAY(s_u16vals);
 	for (i = 0; i < vals_cnt; i++) {
-		// write test
+		/* write test */
 		res = futils_varint_write_u16(data, sizeof(data),
 					      s_u16vals[i].val, &val_len);
 		CU_ASSERT_EQUAL(res, 0);
@@ -89,7 +89,7 @@ static void test_varint_u16(void)
 
 
 
-		// read test
+		/* read test */
 		res = futils_varint_read_u16(s_u16vals[i].data,
 					     sizeof(s_u16vals[i].data),
 					     &uval, &val_len);
@@ -121,7 +121,7 @@ static void test_varint_i16(void)
 	int16_t ival;
 	size_t i;
 
-	// error test
+	/* error test */
 	res = futils_varint_write_i16(NULL, sizeof(data),
 				      s_i16vals[0].val, &val_len);
 	CU_ASSERT_EQUAL(res, -EINVAL);
@@ -149,7 +149,7 @@ static void test_varint_i16(void)
 
 	size_t vals_cnt = SIZEOF_ARRAY(s_i16vals);
 	for (i = 0; i < vals_cnt; i++) {
-		// write test
+		/* write test */
 		res = futils_varint_write_i16(data, sizeof(data),
 					      s_i16vals[i].val, &val_len);
 		CU_ASSERT_EQUAL(res, 0);
@@ -157,7 +157,7 @@ static void test_varint_i16(void)
 		if (val_len == s_i16vals[i].data_len)
 			CU_ASSERT_EQUAL(memcmp(s_i16vals[i].data, data, val_len), 0);
 
-		// read test
+		/* read test */
 		res = futils_varint_read_i16(s_i16vals[i].data,
 					     sizeof(s_i16vals[i].data),
 					     &ival, &val_len);
@@ -167,7 +167,7 @@ static void test_varint_i16(void)
 	}
 }
 
-// varint 32
+/* varint 32 */
 static const struct {
 	uint32_t val;
 	uint8_t data[5];
@@ -187,7 +187,7 @@ static void test_varint_u32(void)
 	uint32_t uval;
 	size_t i;
 
-	// error test
+	/* error test */
 	res = futils_varint_write_u32(NULL, sizeof(data),
 				      s_u32vals[0].val, &val_len);
 	CU_ASSERT_EQUAL(res, -EINVAL);
@@ -217,7 +217,7 @@ static void test_varint_u32(void)
 	for (i = 0; i < vals_cnt; i++) {
 		memset(data, 0, sizeof(data));
 
-		// write test
+		/* write test */
 		res = futils_varint_write_u32(data, sizeof(data),
 					      s_u32vals[i].val, &val_len);
 		CU_ASSERT_EQUAL(res, 0);
@@ -225,7 +225,7 @@ static void test_varint_u32(void)
 		if (val_len == s_u32vals[i].data_len)
 			CU_ASSERT_EQUAL(memcmp(s_u32vals[i].data, data, val_len), 0);
 
-		// read test
+		/* read test */
 		res = futils_varint_read_u32(s_u32vals[i].data,
 					     sizeof(s_u32vals[i].data),
 					     &uval, &val_len);
@@ -257,7 +257,7 @@ static void test_varint_i32(void)
 	int32_t ival;
 	size_t i;
 
-	// error test
+	/* error test */
 	res = futils_varint_write_i32(NULL, sizeof(data),
 				      s_i32vals[0].val, &val_len);
 	CU_ASSERT_EQUAL(res, -EINVAL);
@@ -285,7 +285,7 @@ static void test_varint_i32(void)
 
 	size_t vals_cnt = SIZEOF_ARRAY(s_i32vals);
 	for (i = 0; i < vals_cnt; i++) {
-		// write test
+		/* write test */
 		res = futils_varint_write_i32(data, sizeof(data),
 					      s_i32vals[i].val, &val_len);
 		CU_ASSERT_EQUAL(res, 0);
@@ -293,7 +293,7 @@ static void test_varint_i32(void)
 		if (val_len == s_i32vals[i].data_len)
 			CU_ASSERT_EQUAL(memcmp(s_i32vals[i].data, data, val_len), 0);
 
-		// read test
+		/* read test */
 		res = futils_varint_read_i32(s_i32vals[i].data,
 					     sizeof(s_i32vals[i].data),
 					     &ival, &val_len);
@@ -303,7 +303,7 @@ static void test_varint_i32(void)
 	}
 }
 
-// varint 64
+/* varint 64 */
 static const struct {
 	uint64_t val;
 	uint8_t data[10];
@@ -323,7 +323,7 @@ static void test_varint_u64(void)
 	uint64_t uval;
 	size_t i;
 
-	// error test
+	/* error test */
 	res = futils_varint_write_u64(NULL, sizeof(data),
 				      s_u64vals[0].val, &val_len);
 	CU_ASSERT_EQUAL(res, -EINVAL);
@@ -351,7 +351,7 @@ static void test_varint_u64(void)
 
 	size_t vals_cnt = SIZEOF_ARRAY(s_u64vals);
 	for (i = 0; i < vals_cnt; i++) {
-		// write test
+		/* write test */
 		res = futils_varint_write_u64(data, sizeof(data),
 					      s_u64vals[i].val, &val_len);
 		CU_ASSERT_EQUAL(res, 0);
@@ -359,7 +359,7 @@ static void test_varint_u64(void)
 		if (val_len == s_u64vals[i].data_len)
 			CU_ASSERT_EQUAL(memcmp(s_u64vals[i].data, data, val_len), 0);
 
-		// read test
+		/* read test */
 		res = futils_varint_read_u64(s_u64vals[i].data,
 					     sizeof(s_u64vals[i].data),
 					     &uval, &val_len);
@@ -391,7 +391,7 @@ static void test_varint_i64(void)
 	int64_t ival;
 	size_t i;
 
-	// error test
+	/* error test */
 	res = futils_varint_write_i64(NULL, sizeof(data),
 				      s_i64vals[0].val, &val_len);
 	CU_ASSERT_EQUAL(res, -EINVAL);
@@ -419,7 +419,7 @@ static void test_varint_i64(void)
 
 	size_t vals_cnt = SIZEOF_ARRAY(s_i64vals);
 	for (i = 0; i < vals_cnt; i++) {
-		// write test
+		/* write test */
 		res = futils_varint_write_i64(data, sizeof(data),
 					      s_i64vals[i].val, &val_len);
 		CU_ASSERT_EQUAL(res, 0);
@@ -427,7 +427,7 @@ static void test_varint_i64(void)
 		if (val_len == s_i64vals[i].data_len)
 			CU_ASSERT_EQUAL(memcmp(s_i64vals[i].data, data, val_len), 0);
 
-		// read test
+		/* read test */
 		res = futils_varint_read_i64(s_i64vals[i].data,
 					     sizeof(s_i64vals[i].data),
 					     &ival, &val_len);
