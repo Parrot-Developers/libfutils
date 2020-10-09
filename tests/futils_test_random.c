@@ -278,7 +278,7 @@ static void test_random_base16(void)
 
 			/* allocate a new buffer to let ASan / Valgrind catch
 			   out of bound access / read to undefined */
-			void *buffer = malloc(len);
+			char *buffer = malloc(len);
 			CU_ASSERT_PTR_NOT_NULL_FATAL(buffer);
 
 			actual_ret = futils_random_base16(buffer, len, count);
@@ -319,7 +319,7 @@ static void test_random_base64(void)
 
 			/* allocate a new buffer to let ASan / Valgrind catch
 			   out of bound access / read to undefined */
-			void *buffer = malloc(len);
+			char *buffer = malloc(len);
 			CU_ASSERT_PTR_NOT_NULL_FATAL(buffer);
 
 			actual_ret = futils_random_base64(buffer, len, count);

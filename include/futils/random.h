@@ -312,7 +312,7 @@ static inline int futils_random64_maximum(uint64_t *val, uint64_t maximum)
  *       (count * 2) + 1;
  *       generated string is NUL terminated if len > 0
  */
-int futils_random_base16(void *buffer, size_t len, size_t count);
+int futils_random_base16(char *buffer, size_t len, size_t count);
 
 /**
  * @brief Fill a buffer with random base64 characters
@@ -335,7 +335,7 @@ int futils_random_base16(void *buffer, size_t len, size_t count);
  *       ((count + 2) / 3 * 4) + 1;
  *       generated string is NUL terminated if len > 0
  */
-int futils_random_base64(void *buffer, size_t len, size_t count);
+int futils_random_base64(char *buffer, size_t len, size_t count);
 
 /**
  * @brief Shuffle the items in an array

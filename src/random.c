@@ -1070,7 +1070,7 @@ uint64_t futils_randomr64_maximum(uint64_t maximum)
 	return val;
 }
 
-int futils_random_base16(void *buffer, size_t len, size_t count)
+int futils_random_base16(char *buffer, size_t len, size_t count)
 {
 	/* catch int overflow (while not triggering size_t overflow) */
 	ULOG_ERRNO_RETURN_ERR_IF(count > (((size_t)INT_MAX + 1) / 2), EINVAL);
@@ -1079,7 +1079,7 @@ int futils_random_base16(void *buffer, size_t len, size_t count)
 	static const char alphabet[] = "0123456789abcdef";
 
 	struct pool *pool = pool_get();
-	uint8_t *p = buffer;
+	char *p = buffer;
 	size_t ps = count * 2;
 
 	if (!len)
@@ -1123,7 +1123,7 @@ leave:
 	return count * 2;
 }
 
-int futils_random_base64(void *buffer, size_t len, size_t count)
+int futils_random_base64(char *buffer, size_t len, size_t count)
 {
 	/* catch size_t overflow */
 	ULOG_ERRNO_RETURN_ERR_IF(count > (SIZE_MAX - 2), EINVAL);
@@ -1139,7 +1139,7 @@ int futils_random_base64(void *buffer, size_t len, size_t count)
 		"+/";
 
 	struct pool *pool = pool_get();
-	uint8_t *p = buffer;
+	char *p = buffer;
 	size_t ps = ((count + 2) / 3) * 4;
 
 	size_t c = count;
