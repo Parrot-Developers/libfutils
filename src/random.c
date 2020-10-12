@@ -1070,6 +1070,43 @@ uint64_t futils_randomr64_maximum(uint64_t maximum)
 	return val;
 }
 
+int futils_random_string(char *buffer, size_t len,
+			 size_t count,
+			 const char *alphabet)
+{
+	/* catch int overflow */
+	ULOG_ERRNO_RETURN_ERR_IF(count > INT_MAX, EINVAL);
+
+	struct pool *pool = pool_get();
+	const size_t alphalen = strlen(alphabet);
+	char *p = buffer;
+	size_t ps = count;
+
+	if (!len) {
+		if (!alphalen)
+			return 0;
+
+		return count;
+	}
+
+	if (!alphalen) {
+		*buffer = '\0';
+		return 0;
+	}
+
+	/* reserve a byte for trailing '\0' */
+	if (ps > (len - 1))
+		ps = (len - 1);
+
+	for (; ps; p++, ps--)
+		*p = alphabet[pool_rand_size_maximum(pool,
+						     alphalen - 1)];
+
+	*p = '\0';
+
+	return count;
+}
+
 int futils_random_base16(char *buffer, size_t len, size_t count)
 {
 	/* catch int overflow (while not triggering size_t overflow) */

@@ -293,6 +293,31 @@ static inline int futils_random64_maximum(uint64_t *val, uint64_t maximum)
 }
 
 /**
+ * @brief Fill a buffer with random characters taken from given
+ *        alphabet
+ *
+ * @param buffer    buffer to fill
+ * @param len       buffer length
+ * @param count     number of characters to generate,
+ * @param alphabet  string of characters to use to fill buffer
+ *
+ * @return total number of random characters that would have
+ *         been written to buffer if len was large enough to
+ *         hold count + 1 characters; see snprintf().
+ * @return -EINVAL Invalid parameter
+ * @return other negative errno on internal error
+ *
+ * @note truncation will happen if len is less than
+ *       count + 1;
+ *       generated string is NUL terminated if len > 0
+ * @note if alphabet is empty, only empty string can be
+ *       produced.
+ */
+int futils_random_string(char *buffer, size_t len,
+			 size_t count,
+			 const char *alphabet);
+
+/**
  * @brief Fill a buffer with random hexadecimal characters
  *
  * @param buffer buffer to fill

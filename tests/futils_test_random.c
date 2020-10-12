@@ -259,6 +259,134 @@ static void test_random64_maximum(void)
 	}
 }
 
+static void test_random_string(void)
+{
+	/* empty alphabet produce empty string */
+	{
+		for (size_t count = 0; count < 256; count++) {
+			/* allocate a new buffer to let ASan / Valgrind catch
+			   out of bound access / read to undefined */
+			char *buffer = malloc(count + 1);
+			CU_ASSERT_PTR_NOT_NULL_FATAL(buffer);
+
+			CU_ASSERT_EQUAL(futils_random_string(buffer, count + 1,
+							     count,
+							     ""),
+					0);
+
+			CU_ASSERT_EQUAL(strlen(buffer), 0);
+
+			free(buffer);
+		}
+	}
+
+	/* generate strings from a single character alphabet
+	   buffer length greater or equal to count */
+	{
+		for (size_t count = 0; count < 256; count++) {
+			char *buffer = malloc(256);
+			CU_ASSERT_PTR_NOT_NULL_FATAL(buffer);
+
+			CU_ASSERT_EQUAL(futils_random_string(buffer, 256,
+							     count,
+							     "a"),
+					count);
+
+			CU_ASSERT_EQUAL(strlen(buffer), count);
+
+			CU_ASSERT_EQUAL(strspn(buffer, "a"), count);
+
+			free(buffer);
+		}
+	}
+
+	/* generate strings from a single character alphabet
+	   buffer size less or equal to count */
+	{
+		for (size_t len = 0; len < 256; len++) {
+			char *buffer = malloc(len);
+			CU_ASSERT_PTR_NOT_NULL_FATAL(buffer);
+
+			CU_ASSERT_EQUAL(futils_random_string(buffer, len,
+							     256,
+							     "a"),
+					256);
+
+			if (len) {
+				CU_ASSERT_EQUAL(strlen(buffer), len - 1);
+
+				CU_ASSERT_EQUAL(strspn(buffer, "a"), len - 1);
+			}
+
+			free(buffer);
+		}
+	}
+
+	/* generate strings from multiple identical characters alphabet */
+	{
+		char alphabet[256];
+		char buffer[256];
+
+		for (size_t len = 1; len < sizeof(alphabet) - 1; len++) {
+
+			alphabet[len - 1] = 'a';
+			alphabet[len] = '\0';
+
+			CU_ASSERT_EQUAL(strlen(alphabet), len);
+
+			CU_ASSERT_EQUAL(strspn(alphabet, "a"),
+					len);
+
+			CU_ASSERT_EQUAL(futils_random_string(buffer,
+							     sizeof(buffer),
+							     sizeof(buffer) - 1,
+							     alphabet),
+					sizeof(buffer) - 1);
+
+			CU_ASSERT_EQUAL(strlen(buffer),
+					sizeof(buffer) - 1);
+
+			CU_ASSERT_EQUAL(strspn(buffer, "a"),
+					sizeof(buffer) - 1);
+		}
+	}
+
+	/* check that every characters in alphabet is used */
+	{
+		/* alphabet is { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, ... } */
+		char alphabet[8 + 1];
+		char buffer[4096];
+		uint8_t expected = 0;
+		uint8_t actual;
+
+		for (size_t len = 1; len < sizeof(alphabet); len++) {
+
+			alphabet[len - 1] = 1u << (len - 1);
+			alphabet[len] = '\0';
+
+			expected |= 1u << (len - 1);
+
+			CU_ASSERT_EQUAL(futils_random_string(buffer,
+							     sizeof(buffer),
+							     sizeof(buffer) - 1,
+							     alphabet),
+					sizeof(buffer) - 1);
+
+			CU_ASSERT_EQUAL(strlen(buffer),
+					sizeof(buffer) - 1);
+
+			actual = 0;
+
+			for (size_t i = 0; i < sizeof(buffer) - 1; i++)
+				actual |= (uint8_t)buffer[i];
+
+			CU_ASSERT_EQUAL(actual, expected);
+		}
+
+		CU_ASSERT_EQUAL(expected, 0xffU);
+	}
+}
+
 static void test_random_base16(void)
 {
 	/* count cannot be that big otherwise it would lead to int overflow */
@@ -528,6 +656,7 @@ CU_TestInfo s_random_tests[] = {
 	{(char *)"random16 maximum", &test_random16_maximum},
 	{(char *)"random32 maximum", &test_random32_maximum},
 	{(char *)"random64 maximum", &test_random64_maximum},
+	{(char *)"random string", &test_random_string},
 	{(char *)"random base16", &test_random_base16},
 	{(char *)"random base32", &test_random_base32},
 	{(char *)"random base64", &test_random_base64},
