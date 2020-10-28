@@ -44,6 +44,7 @@
 ULOG_DECLARE_TAG(mbox);
 
 #ifndef _WIN32
+#include <poll.h>
 
 struct mbox {
 	/* pipes fds */
@@ -113,6 +114,41 @@ int mbox_push(struct mbox *box, const void *msg)
 	/* msg_size is less than PIPE_BUF so if the write is successful, it
 	 * means that ALL the data has been properly written */
 	return (ret < 0) ? -errno : 0;
+}
+
+int mbox_push_block(struct mbox *box, const void *msg, unsigned int timeout_ms)
+{
+	int res;
+	int timeout;
+
+	if (!msg || !box)
+		return -EINVAL;
+	/* poll() expects an int for timeout */
+	if (timeout_ms > INT_MAX)
+		return -EINVAL;
+	timeout = (timeout_ms == 0) ? -1 : (int)timeout_ms;
+
+	/* Block until we have at least PIPE_BUF bytes in the pipe */
+	do {
+		struct pollfd pfd = {
+			.fd = box->fds[1],
+			.events = POLLOUT,
+			.revents = 0,
+		};
+
+		res = poll(&pfd, 1, timeout);
+	} while (res == -1 && errno == EINTR);
+
+	if (res == 0)
+		return -ETIMEDOUT;
+	if (res == -1)
+		return -errno;
+	/* When poll indicates that the write will not block, it means that at
+	 * least PIPE_BUF bytes can be written without blocking, or that an
+	 * error occured on the file descriptor, in which case the write is
+	 * expected to fail.
+	 */
+	return mbox_push(box, msg);
 }
 
 int mbox_peek(struct mbox *box, void *msg)
@@ -289,6 +325,57 @@ int mbox_push(struct mbox *box, const void *msg)
 		return -EIO;
 	}
 
+	return 0;
+}
+
+int mbox_push_block(struct mbox *box, const void *msg, unsigned int timeout_ms)
+{
+	int res;
+	ssize_t ret;
+	struct timeval tv_orig = {
+		.tv_sec = timeout_ms / 1000,
+		.tv_usec = timeout_ms * 1000,
+	};
+	size_t done = 0;
+	if (!msg || !box)
+		return -EINVAL;
+
+	/* Block until we have fully written the message */
+	do {
+		struct timeval *tv = NULL;
+		fd_set wfds = {
+			.fd_count = 1,
+			.fd_array = {
+				box->wfd,
+			},
+		};
+		const void *chunk = (const void *)((uint8_t *)msg + done);
+
+		/* Timeout only as long as no data has been written.
+		 * It has to be this way because handling the timeout after
+		 * starting to send some data would corrupt the message, and
+		 * probably all the subsequent messages.
+		 * Unfortunately, not handling the timeout means the function
+		 * could block indefinitely.
+		 */
+		if (timeout_ms > 0 && done == 0)
+			tv = &tv_orig;
+		res = select(box->wfd + 1, NULL, &wfds, NULL, tv);
+		/* Don't return until the full message is sent */
+		if (res == 0) {
+			if (done == 0)
+				return -ETIMEDOUT;
+			continue;
+		}
+		if (res == -1)
+			return -errno;
+
+		/* write what we can */
+		ret = send(box->wfd, chunk, box->msg_size - done, 0);
+		if (ret == -1)
+			return -errno;
+		done += ret;
+	} while (done < box->msg_size);
 	return 0;
 }
 

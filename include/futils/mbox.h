@@ -80,6 +80,25 @@ int mbox_get_read_fd(const struct mbox *box);
 int mbox_push(struct mbox *box, const void *msg);
 
 /**
+ * @brief Write a message in the mail box, blocking until message is queued
+ * or a timeout expires
+ *
+ * @param[in] mbox Handle of the mail box
+ * @param[in] msg The message to send
+ * @param[in] timeout_ms Timeout in milliseconds, 0 for infinity
+ *
+ * @return 0 on success,
+ *         -ETIMEDOUT on timeout
+ *         negative errno on error
+ *
+ * @warning Linux implementation will block until at least PIPE_BUF bytes are
+ *          available in the mailbox, so calling mbox_peek() does not guarantee
+ *          that the next call to mbox_push_block() will not block.
+ */
+int mbox_push_block(struct mbox *box, const void *msg,
+		unsigned int timeout_ms);
+
+/**
  * @brief read a message from the mail box
  *
  * @param[in] mbox Handle of the mail box

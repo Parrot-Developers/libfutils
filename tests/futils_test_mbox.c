@@ -136,6 +136,31 @@ static void test_mbox(void)
 	ret = select(fd + 1, &rfds, NULL, NULL, &timeout);
 	CU_ASSERT_EQUAL(ret, 1);
 
+	/* Invalid blocking push */
+	ret = mbox_push_block(NULL, &s_msg1, 0);
+	CU_ASSERT_EQUAL(ret, -EINVAL);
+	ret = mbox_push_block(box, NULL, 0);
+	CU_ASSERT_EQUAL(ret, -EINVAL);
+
+	/* Fill mbox with messages */
+	while((ret = mbox_push(box, &s_msg1)) == 0);
+
+	/* Attempt blocking push. Timeout expected */
+	ret = mbox_push_block(box, &s_msg1, 100);
+	CU_ASSERT_EQUAL(ret, -ETIMEDOUT);
+
+	/* Empty mbox and try again. Should succeed */
+	while(mbox_peek(box, &out) == 0);
+	ret = mbox_push_block(box, &s_msg1, 100);
+	CU_ASSERT_EQUAL(ret, 0);
+
+	/* Peek the msg1 we just pushed */
+	memset(&out, 0, sizeof(out));
+	ret = mbox_peek(box, &out);
+	CU_ASSERT_EQUAL(ret, 0);
+	ret = memcmp(&out, &s_msg1, sizeof(struct message));
+	CU_ASSERT_EQUAL(ret, 0);
+
 	mbox_destroy(NULL);
 	mbox_destroy(box);
 
