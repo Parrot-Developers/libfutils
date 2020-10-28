@@ -321,6 +321,8 @@ int mbox_push(struct mbox *box, const void *msg)
 	ret = send(box->wfd, msg, box->msg_size, 0);
 
 	if (ret < 0) {
+		if (errno == WSAEWOULDBLOCK)
+			return -EAGAIN;
 		ULOG_ERRNO("send", errno);
 		return -EIO;
 	}

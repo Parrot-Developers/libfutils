@@ -142,8 +142,9 @@ static void test_mbox(void)
 	ret = mbox_push_block(box, NULL, 0);
 	CU_ASSERT_EQUAL(ret, -EINVAL);
 
-	/* Fill mbox with messages */
+	/* Fill mbox with messages. We should get -EAGAIN */
 	while((ret = mbox_push(box, &s_msg1)) == 0);
+	CU_ASSERT_EQUAL(ret, -EAGAIN);
 
 	/* Attempt blocking push. Timeout expected */
 	ret = mbox_push_block(box, &s_msg1, 100);
