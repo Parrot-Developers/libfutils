@@ -172,4 +172,5 @@ static void test_mbox(void)
 
 CU_TestInfo s_mbox_tests[] = {
 	{(char *)"mbox", &test_mbox},
+	CU_TEST_INFO_NULL,
 };
