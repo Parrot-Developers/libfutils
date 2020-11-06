@@ -33,6 +33,13 @@
 
 #ifndef __MINGW32__
 
+#include <pthread.h>
+#include <signal.h>
+
+#define CONCURRENT_MSGLEN (2 * PIPE_BUF)
+#define CONCURRENT_ITERATIONS 100
+static sig_atomic_t concurrent_thread_exit;
+
 /* This function is used to flush the dynmbox contents in tests where there's
  * only a producer */
 static ssize_t flush_mbox(struct dynmbox *box)
@@ -50,6 +57,88 @@ static ssize_t flush_mbox(struct dynmbox *box)
 	} while (ret > 0);
 
 	return ret == -EAGAIN ? nbytes : ret;
+}
+
+static void *test_dynmbox_concurrent_thread(void *arg)
+{
+	static uint8_t msg[CONCURRENT_MSGLEN];
+	struct dynmbox *mbox = arg;
+	int res;
+	unsigned int i;
+
+	memset(msg, 0x55, sizeof(msg));
+
+	for (i = 0; i < CONCURRENT_ITERATIONS; i++) {
+		do {
+			if (concurrent_thread_exit)
+				break;
+			res = dynmbox_push(mbox, &msg, sizeof(msg));
+		} while (res == -EAGAIN);
+	}
+	return NULL;
+}
+
+static void test_dynmbox_concurrent(void)
+{
+	static uint8_t msg[CONCURRENT_MSGLEN];
+	struct dynmbox *box;
+	pthread_t tid;
+	int res;
+	int fd = 0;
+	fd_set rfds;
+	struct timeval timeout;
+	unsigned int i;
+
+	box = dynmbox_new(CONCURRENT_MSGLEN);
+	CU_ASSERT_PTR_NOT_NULL(box);
+
+	concurrent_thread_exit = 0;
+	res = pthread_create(&tid, NULL, test_dynmbox_concurrent_thread,
+			(void *)box);
+	CU_ASSERT_EQUAL(res, 0);
+
+	/* Get fd */
+	fd = dynmbox_get_read_fd(box);
+	CU_ASSERT(fd >= 0);
+
+	for (i = 0; i < CONCURRENT_ITERATIONS; i++) {
+		int early_exit = 0;
+
+		/* Wait for message */
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+		FD_ZERO(&rfds);
+		FD_SET(fd, &rfds);
+		res = select(fd + 1, &rfds, NULL, NULL, &timeout);
+		if (res <= 0) {
+			CU_FAIL("select() failed or timed out (msg lost?)");
+			break;
+		}
+
+		do {
+			res = dynmbox_peek(box, &msg);
+			if (res == -EAGAIN) {
+				CU_FAIL(
+					"select() passed, but we still got -EAGAIN"
+				);
+				early_exit = 1;
+			}
+			if ((res < 0) && (res != -EAGAIN)) {
+				CU_FAIL("dynmbox_peek(): unexpected error");
+				early_exit = 1;
+			}
+			if ((res >= 0) && (res != CONCURRENT_MSGLEN)) {
+				CU_FAIL("Unexpected message length");
+				early_exit = 1;
+			}
+		} while (res == -EAGAIN);
+		if (early_exit)
+			break;
+	}
+
+	concurrent_thread_exit = 1;
+	pthread_join(tid, NULL);
+	dynmbox_destroy(box);
 }
 
 static void test_dynmbox_creation(void)
@@ -404,6 +493,8 @@ CU_TestInfo s_dynmbox_tests[] = {
 		&test_dynmbox_peek_maximum_size},
 	{(char *)"dynmbox peek empty message",
 		&test_dynmbox_peek_empty_message},
+	{(char *)"dynmbox concurrency",
+		&test_dynmbox_concurrent},
 	CU_TEST_INFO_NULL,
 };
 
