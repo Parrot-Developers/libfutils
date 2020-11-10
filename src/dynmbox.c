@@ -521,6 +521,74 @@ fail:
 	return res;
 }
 
+static int wait_cond_timed(struct dynmbox *box,
+		const struct timespec *deadline)
+{
+	int res;
+	res = pthread_cond_timedwait(&box->cond, &box->lock, deadline);
+	return -res;
+}
+
+static int wait_cond(struct dynmbox *box)
+{
+	int res;
+	res = pthread_cond_wait(&box->cond, &box->lock);
+	if (res != 0)
+		return -res;
+	return 0;
+}
+
+int dynmbox_push_block(struct dynmbox *box, const void *msg,
+		size_t msg_size, unsigned int timeout_ms)
+{
+	int res;
+	struct timeval tv_now;
+	struct timespec ts_now;
+	struct timespec ts_abs;
+
+	if (!box || msg_size > box->max_msg_size || (msg_size > 0 && !msg))
+		return -EINVAL;
+
+	if (timeout_ms > 0) {
+		res = gettimeofday(&tv_now, NULL);
+		if (res) {
+			res = -errno;
+			ULOG_ERRNO("gettimeofday()", -res);
+			return res;
+		}
+		time_timeval_to_timespec(&tv_now, &ts_now);
+		time_timespec_add_us(&ts_now, timeout_ms * 1000, &ts_abs);
+	}
+
+	pthread_mutex_lock(&box->lock);
+
+	/* Block until a buffer is available */
+	while (rbuf_space_left(box) < (msg_size + sizeof(uint32_t))) {
+		if (timeout_ms == 0)
+			res = wait_cond(box);
+		else
+			res = wait_cond_timed(box, &ts_abs);
+		if (res)
+			goto fail;
+	}
+
+	/* Write message to ring buffer (should always succeed) */
+	res = do_push(box, msg, msg_size);
+	assert(res == 0);
+	if (res)
+		goto fail; /* Return error (NDEBUG case) */
+
+	pthread_mutex_unlock(&box->lock);
+
+	/* Signal consumers */
+	push_notify(box);
+
+	return 0;
+fail:
+	pthread_mutex_unlock(&box->lock);
+	return res;
+}
+
 ssize_t dynmbox_peek(struct dynmbox *box, void *msg)
 {
 	int res;

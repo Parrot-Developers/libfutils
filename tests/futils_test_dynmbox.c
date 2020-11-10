@@ -73,6 +73,21 @@ static ssize_t flush_mbox(struct dynmbox *box)
 	return nbytes == -EAGAIN ? total : nbytes;
 }
 
+/* This function is used to fill the mbox to max capacity */
+static int fill_mbox(struct dynmbox *box, const void *msg, size_t msglen)
+{
+	int ret;
+
+	if (!box)
+		return -EINVAL;
+
+	do {
+		ret = dynmbox_push(box, msg, msglen);
+	} while (!ret);
+
+	return (ret == -EAGAIN) ? 0 : ret;
+}
+
 static void *test_dynmbox_concurrent_thread(void *arg)
 {
 	static uint8_t msg[CONCURRENT_MSGLEN];
@@ -504,6 +519,38 @@ static void test_dynmbox_peek_empty_message(void)
 	dynmbox_destroy(box);
 }
 
+static void test_dynmbox_push_block(void)
+{
+	struct dynmbox *box;
+	int error;
+	const char msg1[7] = {
+		'd', 'y', 'n', 'm', 'b', 'o', 'x'
+	};
+
+	init_winsock();
+
+	/* Create a box with any size */
+	box = dynmbox_new(8);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(box);
+
+	/* Pushing the first message should succeed immediately */
+	error = dynmbox_push_block(box, msg1, sizeof(msg1), 0);
+	CU_ASSERT_EQUAL(error, 0);
+
+	/* Fill the queue */
+	error = fill_mbox(box, msg1, sizeof(msg1));
+	CU_ASSERT_EQUAL(error, 0);
+
+	/* Blocking push should time out */
+	error = dynmbox_push_block(box, msg1, sizeof(msg1), 100);
+	CU_ASSERT_EQUAL(error, -ETIMEDOUT);
+
+	/* Empty mbox */
+	flush_mbox(box);
+
+	dynmbox_destroy(box);
+}
+
 CU_TestInfo s_dynmbox_tests[] = {
 	{(char *)"dynmbox creation", &test_dynmbox_creation},
 	{(char *)"dynmbox get read fd", &test_dynmbox_get_read_fd},
@@ -522,5 +569,7 @@ CU_TestInfo s_dynmbox_tests[] = {
 		&test_dynmbox_peek_empty_message},
 	{(char *)"dynmbox concurrency",
 		&test_dynmbox_concurrent},
+	{(char *)"dynmbox push_block",
+		&test_dynmbox_push_block},
 	CU_TEST_INFO_NULL,
 };

@@ -117,6 +117,25 @@ int dynmbox_push(struct dynmbox *box,
 		     size_t msg_size);
 
 /**
+ * @brief Write a message in the mail box, blocking if necessary
+ *
+ * @param[in] box Handle of the mail box
+ * @param[in] msg The message to send
+ * @param[in] msg_size Size of the message to send
+ * @param[in] timeout_ms Operation timeout in milliseconds. 0 for infinity
+ *
+ * @return 0 if all data was written
+ *         -EINVAL in case of invalid arguments,
+ *         -EAGAIN if the message box does not have enough space to queue the
+ *                 full message
+ *         -ETIMEDOUT if the timeout expired before the mail box was ready
+ */
+int dynmbox_push_block(struct dynmbox *box,
+		       const void *msg,
+		       size_t msg_size,
+		       unsigned int timeout_ms);
+
+/**
  * @brief read a message from the mail box
  *
  * @param[in] box Handle of the mail box
