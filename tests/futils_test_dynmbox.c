@@ -31,15 +31,29 @@
 
 #include "futils_test.h"
 
-#ifndef __MINGW32__
-
 #include <pthread.h>
 #include <signal.h>
+
+#ifdef _WIN32
+# include <winsock2.h>
+# define PIPE_BUF 4096
+#endif
 
 #define CONCURRENT_MSGLEN (2 * PIPE_BUF)
 #define CONCURRENT_ITERATIONS 100
 static sig_atomic_t concurrent_thread_exit;
 static uint8_t flush_mbox_buf[DYNMBOX_MAX_SIZE];
+
+#ifdef _WIN32
+static inline void init_winsock(void)
+{
+	/* Initialize winsock API */
+	WSADATA wsadata;
+	WSAStartup(MAKEWORD(2, 0), &wsadata);
+}
+#else
+static inline void init_winsock(void) {}
+#endif
 
 /* This function is used to flush the dynmbox contents in tests where there's
  * only a producer */
@@ -88,6 +102,8 @@ static void test_dynmbox_concurrent(void)
 	fd_set rfds;
 	struct timeval timeout;
 	unsigned int i;
+
+	init_winsock();
 
 	box = dynmbox_new(CONCURRENT_MSGLEN);
 	CU_ASSERT_PTR_NOT_NULL(box);
@@ -145,6 +161,8 @@ static void test_dynmbox_creation(void)
 {
 	struct dynmbox *box1, *box2, *box3;
 
+	init_winsock();
+
 	/* Message size smaller than DYNMBOX_MAX_SIZE => the box should be
 	 * created successfully */
 	box1 = dynmbox_new(10);
@@ -168,6 +186,8 @@ static void test_dynmbox_get_read_fd(void)
 	struct dynmbox *box;
 	int ret;
 
+	init_winsock();
+
 	/* Create a box */
 	box = dynmbox_new(10);
 	CU_ASSERT_PTR_NOT_NULL(box);
@@ -188,6 +208,8 @@ static void test_dynmbox_get_max_size(void)
 {
 	struct dynmbox *box1, *box2, *box3, *box4;
 	int ret;
+
+	init_winsock();
 
 	/* Getting max size of null dynmbox should fail */
 	ret = dynmbox_get_max_size(NULL);
@@ -239,6 +261,8 @@ static void test_dynmbox_push_smaller_than_pipe_buf(void)
 	int msg[10];
 	size_t max_msg_size = sizeof(msg);
 
+	init_winsock();
+
 	/* initialize buffer to push */
 	for (i = 0; i < SIZEOF_ARRAY(msg); i++)
 		msg[i] = i;
@@ -275,6 +299,8 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 	char large_msg[PIPE_BUF + 1], very_large_msg[DYNMBOX_MAX_SIZE];
 	size_t large_msg_max_size = sizeof(large_msg);
 	size_t very_large_msg_max_size = sizeof(very_large_msg);
+
+	init_winsock();
 
 	/* initialize buffers to push */
 	for (i = 0; i < SIZEOF_ARRAY(large_msg); i++)
@@ -343,6 +369,8 @@ static void test_dynmbox_peek_smaller_than_pipe_buf(void)
 	int msg_read[10];
 	size_t max_msg_size = sizeof(msg_sent);
 
+	init_winsock();
+
 	/* Create a box with a size smaller than PIPE_BUF */
 	CU_ASSERT_TRUE_FATAL(max_msg_size < PIPE_BUF);
 	box = dynmbox_new(max_msg_size);
@@ -376,6 +404,8 @@ static int send_and_receive_msg(struct dynmbox *box,
 {
 	int ret;
 
+	init_winsock();
+
 	ret = dynmbox_push(box, src, msg_size);
 	CU_ASSERT_EQUAL_FATAL(ret, 0);
 
@@ -394,6 +424,8 @@ static void test_dynmbox_peek_larger_than_pipe_buf(void)
 	char msg_sent[2 * PIPE_BUF];
 	char msg_read[2 * PIPE_BUF];
 	size_t max_msg_size = sizeof(msg_sent);
+
+	init_winsock();
 
 	for (i = 0; i < SIZEOF_ARRAY(msg_sent); i++)
 		msg_sent[i] = i;
@@ -427,6 +459,8 @@ static void test_dynmbox_peek_maximum_size(void)
 	char msg_read[DYNMBOX_MAX_SIZE];
 	size_t max_msg_size = sizeof(msg_sent);
 
+	init_winsock();
+
 	for (i = 0; i < SIZEOF_ARRAY(msg_sent); i++)
 		msg_sent[i] = i;
 
@@ -456,6 +490,8 @@ static void test_dynmbox_peek_empty_message(void)
 	struct dynmbox *box;
 	int error;
 	char msg_read[2 * PIPE_BUF];
+
+	init_winsock();
 
 	/* Create a box with a size of PIPE_BUF */
 	box = dynmbox_new(PIPE_BUF);
@@ -488,11 +524,3 @@ CU_TestInfo s_dynmbox_tests[] = {
 		&test_dynmbox_concurrent},
 	CU_TEST_INFO_NULL,
 };
-
-#else
-
-CU_TestInfo s_dynmbox_tests[] = {
-	CU_TEST_INFO_NULL,
-};
-
-#endif

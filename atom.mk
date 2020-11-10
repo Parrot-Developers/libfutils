@@ -23,9 +23,9 @@ LOCAL_SRC_FILES := \
 
 ifeq ("$(TARGET_OS)", "linux")
   LOCAL_SRC_FILES += src/inotify.c
-  ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
-    LOCAL_SRC_FILES += src/dynmbox.c
-  endif
+endif
+ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
+  LOCAL_SRC_FILES += src/dynmbox.c
 endif
 
 ifneq ("$(TARGET_OS)","windows")

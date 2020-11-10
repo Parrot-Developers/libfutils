@@ -45,7 +45,7 @@
 #ifndef __DYNMBOX_H__
 #define __DYNMBOX_H__
 
-#include <unistd.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +54,7 @@ extern "C" {
 /* Maximum size of a dynmbox message.
  * This was originally based on Linux default pipe capacity.
  */
-#define DYNMBOX_MAX_SIZE (65536 - sizeof(size_t))
+#define DYNMBOX_MAX_SIZE (65536 - sizeof(uint32_t))
 
 struct dynmbox;
 
