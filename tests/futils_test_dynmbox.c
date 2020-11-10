@@ -39,24 +39,24 @@
 #define CONCURRENT_MSGLEN (2 * PIPE_BUF)
 #define CONCURRENT_ITERATIONS 100
 static sig_atomic_t concurrent_thread_exit;
+static uint8_t flush_mbox_buf[DYNMBOX_MAX_SIZE];
 
 /* This function is used to flush the dynmbox contents in tests where there's
  * only a producer */
 static ssize_t flush_mbox(struct dynmbox *box)
 {
-	int ret;
-	int nbytes = 0;
-	char buf;
+	ssize_t nbytes;
+	ssize_t total = 0;
 
 	if (!box)
 		return -EINVAL;
 
 	do {
-		ret = read(dynmbox_get_read_fd(box), &buf, 1);
-		nbytes += ret >= 0 ? 1 : 0;
-	} while (ret > 0);
+		nbytes = dynmbox_peek(box, flush_mbox_buf);
+		total += nbytes >= 0 ? nbytes : 0;
+	} while (nbytes >= 0);
 
-	return ret == -EAGAIN ? nbytes : ret;
+	return nbytes == -EAGAIN ? total : nbytes;
 }
 
 static void *test_dynmbox_concurrent_thread(void *arg)
@@ -330,15 +330,6 @@ static void test_dynmbox_push_larger_than_pipe_buf(void)
 	/* Push a message of a larger size */
 	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size * 2);
 	CU_ASSERT_EQUAL(ret, -EINVAL);
-
-	/* Push a message of almost the maximum size, leaving just enough room
-	 * in the pipe buffer for the header + one byte */
-	ret = dynmbox_push(box2, very_large_msg, very_large_msg_max_size - 5);
-	CU_ASSERT_EQUAL(ret, 0);
-	/* The buffer has not been read yet, and we try to push a message of
-	 * only 2 bytes, which exceeds the pipe buffer capacity */
-	ret = dynmbox_push(box2, very_large_msg, 2);
-	CU_ASSERT_EQUAL(ret, -EAGAIN);
 
 	dynmbox_destroy(box1);
 	dynmbox_destroy(box2);
