@@ -30,8 +30,12 @@
  * @details This mechanism allows a single producer thread to send messages
  * to a single consumer thread. The messages' size can vary within the capacity
  * declared at the mailbox's initialization. Write & read are non-blocking, and
- * the messages will be read in the order in which they are sent (even if their
- * size exceeds PIPE_BUF).
+ * the messages will be read atomically and in the order in which they are sent
+ * (even if their size exceeds PIPE_BUF).
+ * A mailbox has a finite queue capacity. It is unspecfified whether this is a
+ * limit in the number of messages or in the number of bytes stored in the
+ * queue. However, it is guaranteed that an empty mailbox can queue at least
+ * one message of the maximum size allocated at creation time.
  * The behaviour in the case of multiple producers is completely unspecified,
  * though no runtime check is done in order to verify that there is only one
  * producer per mailbox.
@@ -47,9 +51,9 @@
 extern "C" {
 #endif
 
-/* Maximum size of a dynmbox message : this is based on the default pipe
- * capacity of 65536 bytes, which can be modified using the fcntl F_SETPIPE_SZ
- * operation. See pipe(7) for details */
+/* Maximum size of a dynmbox message.
+ * This was originally based on Linux default pipe capacity.
+ */
 #define DYNMBOX_MAX_SIZE (65536 - sizeof(size_t))
 
 struct dynmbox;
@@ -66,6 +70,7 @@ struct dynmbox *dynmbox_new(size_t max_msg_size);
 
 /**
  * @brief Destroy a mail box
+ * @warning There must be no other in-use reference to the mail box to destroy.
  *
  * @param[in] box Handle of the mail box
  */
@@ -101,7 +106,7 @@ ssize_t dynmbox_get_max_size(const struct dynmbox *box);
  * @return 0 if all data was written
  *         -EINVAL in case of invalid arguments,
  *         -EAGAIN if the message box is already full, or if adding the message
- * would overflow the pipe capacity, or if the write could not be completed
+ * would overflow the mbox capacity, or if the write could not be completed
  */
 int dynmbox_push(struct dynmbox *box,
 		     const void *msg,
@@ -115,7 +120,7 @@ int dynmbox_push(struct dynmbox *box,
  *
  * @return size of what has been read on success,
  *         -EINVAL in case of invalid arguments,
- *         -EPIPE if the pipe closed,
+ *         -EPIPE if the mbox closed,
  *         other negative errno on error in read
  */
 ssize_t dynmbox_peek(struct dynmbox *box, void *msg);
