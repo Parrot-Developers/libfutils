@@ -49,6 +49,14 @@ extern "C" {
 int time_get_monotonic(struct timespec *ts);
 
 /**
+ * @brief Get the system time (UTC) using the real-time clock
+ *
+ * @param ts The timespec to fill
+ * @return 0 on success, negative errno value on errors
+ */
+int time_get_realtime(struct timespec *ts);
+
+/**
  * @brief Compute a subtraction of two timespec values.
  *
  * @param start timespec start time

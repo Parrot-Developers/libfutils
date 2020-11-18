@@ -55,6 +55,39 @@ int time_get_monotonic(struct timespec *tp)
 	return 0;
 }
 
+int time_get_realtime(struct timespec *ts)
+{
+	/* number of 100ns slice in one second */
+	const uint64_t sec_as_100ns = ((uint64_t)1000 * 1000 * 1000 /
+				       100);
+	/* difference between Windows epoch start (1601, January 1st) and
+	 * Unix epoch start (1970, January 1st), with both epoch starting
+	 * at 00:00:00 UTC, is 134774 days in Gregorian calendar.
+	 */
+	const uint64_t windows_unix_delta_as_100ns = ((uint64_t)134774 *
+						      24 * 60 * 60 *
+						      sec_as_100ns);
+	FILETIME filetime;
+	uint64_t t;
+
+	GetSystemTimeAsFileTime(&filetime);
+
+	t = (((uint64_t)filetime.dwHighDateTime << 32) |
+	     filetime.dwLowDateTime);
+
+	/* clamp to Unix epoch start */
+	if (t < windows_unix_delta_as_100ns)
+		t = windows_unix_delta_as_100ns;
+
+	/* shift from Windows epoch to Unix epoch */
+	t -= windows_unix_delta_as_100ns;
+
+	ts.tv_sec = (time_t)(t / sec_as_100ns);
+	ts.tv_nsec = (long)((t % sec_as_100ns) * 100);
+
+	return 0;
+}
+
 #elif defined(__MACH__)
 
 #include <mach/mach_time.h>
@@ -96,6 +129,25 @@ int time_get_monotonic(struct timespec *ts)
 	return time_get_monotonic_internal_mach(ts);
 }
 
+int time_get_realtime(struct timespec *ts)
+{
+	struct timeval tv;
+
+#ifdef ARSDK_MACH_HAS_CLOCK_GETTIME
+	if (clock_gettime)
+		return ((clock_gettime(CLOCK_REALTIME, ts) < 0) ?
+			-errno :
+			0);
+#endif
+	if (gettimeofday(&tv, NULL) < 0)
+		return -errno;
+
+	ts->tv_sec = tv.tv_sec;
+	ts->tv_nsec = tv.tv_usec * 1000;
+
+	return 0;
+}
+
 #elif defined(THREADX_OS)
 
 #include <AmbaDataType.h>
@@ -116,6 +168,11 @@ int time_get_monotonic(struct timespec *out)
 	return 0;
 }
 
+int time_get_realtime(struct timespec *out)
+{
+	return -ENOSYS;
+}
+
 #else
 
 int time_get_monotonic(struct timespec *ts)
@@ -123,6 +180,17 @@ int time_get_monotonic(struct timespec *ts)
 	int ret;
 
 	ret = clock_gettime(CLOCK_MONOTONIC, ts);
+	if (ret < 0)
+		return -errno;
+
+	return 0;
+}
+
+int time_get_realtime(struct timespec *ts)
+{
+	int ret;
+
+	ret = clock_gettime(CLOCK_REALTIME, ts);
 	if (ret < 0)
 		return -errno;
 
