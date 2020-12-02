@@ -40,6 +40,7 @@ extern CU_TestInfo s_list_tests[];
 extern CU_TestInfo s_random_tests[];
 extern CU_TestInfo s_varint_tests[];
 extern CU_TestInfo s_timetools_tests[];
+extern CU_TestInfo s_safew_tests[];
 
 static void test_bound(void)
 {
@@ -69,6 +70,7 @@ static CU_SuiteInfo s_suites[] = {
 	{(char *)"random", NULL, NULL, s_random_tests},
 	{(char *)"varint", NULL, NULL, s_varint_tests},
 	{(char *)"timetools", NULL, NULL, s_timetools_tests},
+	{(char *)"safew", NULL, NULL, s_safew_tests},
 	CU_SUITE_INFO_NULL,
 };
 

@@ -122,6 +122,7 @@
 #include <futils/dynmbox.h>
 #include <futils/random.h>
 #include <futils/varint.h>
+#include <futils/safew.h>
 #include <futils/futils.hpp>
 
 #endif /*_FUTILS_H_ */

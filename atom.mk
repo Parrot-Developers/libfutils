@@ -16,6 +16,7 @@ LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64
 LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/mbox.c \
+	src/safew.c \
 	src/systimetools.c \
 	src/timetools.c \
 	src/random.c \
@@ -49,6 +50,7 @@ LOCAL_SRC_FILES := \
 	tests/futils_test_dynmbox.c \
 	tests/futils_test_list.c \
 	tests/futils_test_mbox.c \
+	tests/futils_test_safew.c \
 	tests/futils_test_random.c \
 	tests/futils_test_systimetools.c \
 	tests/futils_test_timetools.c \
