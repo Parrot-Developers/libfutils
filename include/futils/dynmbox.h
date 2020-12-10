@@ -45,7 +45,11 @@
 #ifndef __DYNMBOX_H__
 #define __DYNMBOX_H__
 
+#include <stddef.h>
+/* For size_t */
 #include <stdint.h>
+/* For ssize_t */
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
