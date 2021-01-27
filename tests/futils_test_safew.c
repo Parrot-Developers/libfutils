@@ -37,17 +37,7 @@
 
 #include <futils/safew.h>
 #include "futils_test.h"
-
-/* In order to acess fp to close it and simulate an abnormal interruption
-* or a failure.
- */
-#define SAFEW_PATH_MAX_LEN 128
-struct futils_safew_file {
-	FILE *fp;
-	char path[SAFEW_PATH_MAX_LEN];
-	char tmp_path[SAFEW_PATH_MAX_LEN + 4];
-	int failure;
-};
+#include "../src/safew_types.h"
 
 #define FILE_PATH "safew_test_file"
 #define FILE_PATH_TMP "safew_test_file.tmp"

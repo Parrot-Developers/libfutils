@@ -34,26 +34,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "safew_types.h"
 #include "futils/safew.h"
 
 #define ULOG_TAG futils_safew
 #include <ulog.h>
 ULOG_DECLARE_TAG(ULOG_TAG);
-
-#define SAFEW_TMP_SUFFIX ".tmp"
-/* exclude final '\0' from char sizeof */
-#define SAFEW_TMP_SUFFIX_SIZE (sizeof(SAFEW_TMP_SUFFIX) - 1)
-#define SAFEW_PATH_MAX_LEN 128
-#ifdef THREADX_OS
-#define SAFEW_BUFFER_SIZE 128
-#endif
-
-struct futils_safew_file {
-	FILE *fp;
-	char path[SAFEW_PATH_MAX_LEN];
-	char tmp_path[SAFEW_PATH_MAX_LEN + SAFEW_TMP_SUFFIX_SIZE];
-	int failure;
-};
 
 struct futils_safew_file *futils_safew_fopen(const char *pathname)
 {
