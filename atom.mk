@@ -16,7 +16,6 @@ LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64
 LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/mbox.c \
-	src/safew.c \
 	src/systimetools.c \
 	src/timetools.c \
 	src/random.c \
@@ -32,8 +31,9 @@ endif
 ifneq ("$(TARGET_OS)","windows")
 LOCAL_SRC_FILES += \
 	src/fdutils.c \
-	src/synctools.c \
-	src/fs.c
+	src/fs.c \
+	src/safew.c \
+	src/synctools.c
 else
 LOCAL_LDLIBS += -lws2_32
 endif
