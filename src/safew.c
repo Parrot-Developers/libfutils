@@ -125,9 +125,13 @@ int futils_safew_fclose_commit(struct futils_safew_file *safew_fp)
 	/* threadx close is doing a sync
 	 * fsync() is not supported by Mingw
 	 */
-#if !defined(THREADX_OS) && !defined(_WIN32)
+#if !defined(_WIN32)
+# if !defined(THREADX_OS)
 	if (fsync(fileno(safew_fp->fp)))
 		safew_fp->failure = 1;
+# endif
+#else
+# warning "fsync is not supported"
 #endif
 	if (fclose(safew_fp->fp))
 		safew_fp->failure = 1;
