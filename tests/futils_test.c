@@ -110,12 +110,14 @@ static CU_SuiteInfo s_suites[] = {
 		.pCleanupFunc = NULL,
 		.pTests = s_timetools_tests
 	},
+#ifndef _WIN32
 	{
 		.pName = (char *)"safew",
 		.pInitFunc = NULL,
 		.pCleanupFunc = NULL,
 		.pTests = s_safew_tests
 	},
+#endif
 	CU_SUITE_INFO_NULL,
 };
 
