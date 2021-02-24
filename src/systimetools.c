@@ -573,6 +573,10 @@ int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec)
 
 	tv.tv_sec = epoch_sec;
 
+	ret = settimeofday(&tv, NULL);
+	if (ret < 0)
+		return -errno;
+
 #ifdef BUILD_LIBPUTILS
 	/* utc offset */
 	char value[SYS_PROP_VALUE_MAX];
@@ -581,10 +585,6 @@ int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec)
 	if (ret < 0)
 		return ret;
 #endif
-
-	ret = settimeofday(&tv, NULL);
-	if (ret < 0)
-		return -errno;
 
 	return 0;
 #endif
