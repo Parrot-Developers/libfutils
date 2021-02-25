@@ -62,15 +62,60 @@ CU_TestInfo s_futils_tests[] = {
 };
 
 static CU_SuiteInfo s_suites[] = {
-	{(char *)"futils", NULL, NULL, s_futils_tests},
-	{(char *)"mbox", NULL, NULL, s_mbox_tests},
-	{(char *)"dynmbox", NULL, NULL, s_dynmbox_tests},
-	{(char *)"systimetools", NULL, NULL, s_systimetools_tests},
-	{(char *)"list", NULL, NULL, s_list_tests},
-	{(char *)"random", NULL, NULL, s_random_tests},
-	{(char *)"varint", NULL, NULL, s_varint_tests},
-	{(char *)"timetools", NULL, NULL, s_timetools_tests},
-	{(char *)"safew", NULL, NULL, s_safew_tests},
+	{
+		.pName = (char *)"futils",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_futils_tests
+	},
+	{
+		.pName = (char *)"mbox",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_mbox_tests
+	},
+	{
+		.pName = (char *)"dynmbox",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_dynmbox_tests
+	},
+	{
+		.pName = (char *)"systimetools",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_systimetools_tests
+	},
+	{
+		.pName = (char *)"list",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_list_tests
+	},
+	{
+		.pName = (char *)"random",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_random_tests
+	},
+	{
+		.pName = (char *)"varint",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_varint_tests
+	},
+	{
+		.pName = (char *)"timetools",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_timetools_tests
+	},
+	{
+		.pName = (char *)"safew",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_safew_tests
+	},
 	CU_SUITE_INFO_NULL,
 };
 
