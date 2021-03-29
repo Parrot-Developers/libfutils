@@ -921,7 +921,8 @@ static int rand_fetch(void *buffer, size_t len)
 		if (rd < 0) {
 			if (errno == EINTR)
 				continue;
-			if (errno == ENOSYS)
+			if (errno == ENOSYS ||
+			    errno == EAGAIN)
 				break;
 
 			ULOG_ERRNO("getrandom()", errno);
