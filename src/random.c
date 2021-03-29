@@ -325,7 +325,9 @@ static void chacha_keystream(struct chacha *chacha,
 	}
 }
 
-static int rand_fetch(void *buffer, size_t len);
+#define RAND_FETCH_STRONG 1
+
+static int rand_fetch(void *buffer, size_t len, int strong);
 
 struct pool {
 	struct chacha chacha;
@@ -465,7 +467,7 @@ static int pool_seed(struct pool *pool, unsigned int era)
 	uint8_t key[CHACHA_KEY_NONCE_SIZE];
 	int err;
 
-	err = rand_fetch(key, sizeof(key));
+	err = rand_fetch(key, sizeof(key), 0);
 	if (err) {
 		ULOG_ERRNO("rand_fetch()",
 			   -err);
@@ -878,7 +880,7 @@ static size_t pool_rand_size_maximum(struct pool *pool,
 #endif
 }
 
-static int rand_fetch(void *buffer, size_t len)
+static int rand_fetch(void *buffer, size_t len, int strong)
 {
 #ifdef _WIN32
 	uint8_t *p = buffer;
@@ -914,13 +916,16 @@ static int rand_fetch(void *buffer, size_t len)
 	int fd;
 	ssize_t rd;
 	int ret = 0;
+	const char *const dev_path = strong ? "/dev/random" : "/dev/urandom";
+	const int dev_flags = strong ? 0 : O_NONBLOCK;
 
 #ifdef HAVE_GETRANDOM
 #ifndef GRND_INSECURE
 #define GRND_INSECURE 0
 #endif
+	const int grnd = strong ? GRND_RANDOM :
 			  /* use /dev/urandom semantics */
-	const int grnd = (GRND_INSECURE |
+			 (GRND_INSECURE |
 			  /* fallback to /dev/urandom if getrandom()
 			    is not ready */
 			  GRND_NONBLOCK);
@@ -934,7 +939,7 @@ static int rand_fetch(void *buffer, size_t len)
 			    errno == EAGAIN)
 				break;
 
-			ULOG_ERRNO("getrandom()", errno);
+			ULOGE_ERRNO(errno, "getrandom(, %zu, %#x)", len, grnd);
 			break;
 		}
 
@@ -951,10 +956,10 @@ static int rand_fetch(void *buffer, size_t len)
 		return 0;
 #endif
 
-	fd = open("/dev/urandom", O_RDONLY | O_NONBLOCK);
+	fd = open(dev_path, O_RDONLY | dev_flags);
 	if (fd < 0) {
 		ret = -errno;
-		ULOG_ERRNO("open(/dev/urandom)", -ret);
+		ULOGE_ERRNO(-ret, "open(\"%s\")", dev_path);
 		return ret;
 	}
 
@@ -964,7 +969,7 @@ static int rand_fetch(void *buffer, size_t len)
 			if (errno == EINTR)
 				continue;
 			ret = -errno;
-			ULOG_ERRNO("read", -ret);
+			ULOGE_ERRNO(-ret, "read(\"%s\",,%zu)", dev_path, len);
 			break;
 		}
 
@@ -990,7 +995,7 @@ int futils_random_strong(void *buffer, size_t len)
 	if (!buffer || len == 0)
 		return -EINVAL;
 
-	return rand_fetch(buffer, len);
+	return rand_fetch(buffer, len, RAND_FETCH_STRONG);
 }
 
 void futils_random(void *buffer, size_t len)
