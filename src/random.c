@@ -916,8 +916,17 @@ static int rand_fetch(void *buffer, size_t len)
 	int ret = 0;
 
 #ifdef HAVE_GETRANDOM
+#ifndef GRND_INSECURE
+#define GRND_INSECURE 0
+#endif
+			  /* use /dev/urandom semantics */
+	const int grnd = (GRND_INSECURE |
+			  /* fallback to /dev/urandom if getrandom()
+			    is not ready */
+			  GRND_NONBLOCK);
+
 	while (len) {
-		rd = getrandom(p, len, GRND_NONBLOCK);
+		rd = getrandom(p, len, grnd);
 		if (rd < 0) {
 			if (errno == EINTR)
 				continue;
