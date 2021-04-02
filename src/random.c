@@ -1123,6 +1123,100 @@ leave:
 	return count * 2;
 }
 
+int futils_random_base32(char *buffer, size_t len, size_t count)
+{
+	/* catch size_t overflow */
+	ULOG_ERRNO_RETURN_ERR_IF(count > (SIZE_MAX - 4), EINVAL);
+	/* catch int overflow (while not triggering size_t overflow) */
+	ULOG_ERRNO_RETURN_ERR_IF((count + 4) / 5 > ((size_t)INT_MAX + 7) / 8,
+				 EINVAL);
+	ULOG_ERRNO_RETURN_ERR_IF(((count + 4) / 5) * 8 > INT_MAX, EINVAL);
+
+	static const char alphabet[] =
+	  "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+	struct pool *pool = pool_get();
+
+	uint8_t *p = (uint8_t *)buffer;
+	size_t ps = ((count + 4) / 5) * 8;
+
+	size_t c = count;
+
+	char b[8]; /* 8 * 5 bits for 5 * 8 bits */
+	size_t bs;
+
+	if (!len)
+		goto leave;
+
+	if (ps > (len - 1))
+		ps = (len - 1);
+
+	while (c >= 5 && ps) {
+
+		uint64_t v;
+
+		v = pool_rand64(pool);
+
+		b[0] = alphabet[(v >>  0) & 31];
+		b[1] = alphabet[(v >>  5) & 31];
+		b[2] = alphabet[(v >> 10) & 31];
+		b[3] = alphabet[(v >> 15) & 31];
+		b[4] = alphabet[(v >> 20) & 31];
+		b[5] = alphabet[(v >> 25) & 31];
+		b[6] = alphabet[(v >> 30) & 31];
+		b[7] = alphabet[(v >> 35) & 31];
+
+		bs = 8;
+		if (bs > ps)
+			bs = ps;
+
+		memcpy(p, b, bs);
+		p += bs;
+		ps -= bs;
+
+		c -= 5;
+	}
+
+	/* last blob can end with up to 6 padding characters */
+	if (c && ps) {
+
+		uint64_t v;
+		size_t i;
+
+		v = pool_rand64(pool);
+
+		for (i = 0; i < (c * 8) / 5; i++) {
+			b[i] = alphabet[v & 31];
+			v >>= 5;
+		}
+
+		/* last character has only a limited number of bits */
+		size_t remaining = c * 8 - i * 5;
+		unsigned int mask = ~((1u << (5 - remaining)) - 1);
+
+		b[i++] = alphabet[(v & 31) & mask];
+
+		for (; i < 8; i++)
+			b[i] = '=';
+
+		bs = 8;
+		if (bs > ps)
+			bs = ps;
+
+		memcpy(p, b, bs);
+		p += bs;
+		ps -= bs;
+
+		c = 0;
+	}
+
+	/* NUL terminate string */
+	*p = '\0';
+
+leave:
+	return ((count + 4) / 5) * 8;
+}
+
 int futils_random_base64(char *buffer, size_t len, size_t count)
 {
 	/* catch size_t overflow */

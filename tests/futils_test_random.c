@@ -300,6 +300,47 @@ static void test_random_base16(void)
 		}
 }
 
+static void test_random_base32(void)
+{
+	/* count cannot be that big otherwise it would lead to int overflow */
+	const size_t count_max = ((((size_t)INT_MAX + 7) / 8) * 5) - 4;
+
+	CU_ASSERT_EQUAL(futils_random_base32(NULL, 0, count_max - 1),
+			((count_max - 1 + 4) / 5) * 8);
+
+	CU_ASSERT_EQUAL(futils_random_base32(NULL, 0, count_max),
+			-EINVAL);
+
+	for (size_t len = 0; len < 256; len++)
+		for (size_t count = 0; count < 256; count++) {
+
+			int actual_ret;
+			size_t expected_ret = ((count + 4) / 5) * 8;
+
+			/* allocate a new buffer to let ASan / Valgrind catch
+			   out of bound access / read to undefined */
+			char *buffer = malloc(len);
+			CU_ASSERT_PTR_NOT_NULL_FATAL(buffer);
+
+			actual_ret = futils_random_base32(buffer, len, count);
+			CU_ASSERT_TRUE_FATAL(actual_ret >= 0);
+
+			CU_ASSERT_EQUAL((size_t)actual_ret, expected_ret);
+
+			if (len) {
+				if (expected_ret > (len - 1)) {
+					CU_ASSERT_EQUAL(strlen(buffer),
+							len - 1);
+				} else {
+					CU_ASSERT_EQUAL(strlen(buffer),
+							expected_ret);
+				}
+			}
+
+			free(buffer);
+		}
+}
+
 static void test_random_base64(void)
 {
 	/* count cannot be that big otherwise it would lead to int overflow */
@@ -488,6 +529,7 @@ CU_TestInfo s_random_tests[] = {
 	{(char *)"random32 maximum", &test_random32_maximum},
 	{(char *)"random64 maximum", &test_random64_maximum},
 	{(char *)"random base16", &test_random_base16},
+	{(char *)"random base32", &test_random_base32},
 	{(char *)"random base64", &test_random_base64},
 	{(char *)"random shuffle", &test_random_shuffle},
 	CU_TEST_INFO_NULL,
