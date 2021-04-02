@@ -92,7 +92,6 @@ int futils_hash_init(struct hash *hash, size_t size)
 	/* allocate buckets */
 	hash->buckets = calloc(hash->size, sizeof(struct hash_entry *));
 	if (!hash->buckets) {
-		free(hash);
 		ret = -ENOMEM;
 		goto error;
 	}
