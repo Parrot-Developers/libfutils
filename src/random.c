@@ -1179,22 +1179,23 @@ int futils_random_base64(void *buffer, size_t len, size_t count)
 	if (c && ps) {
 
 		uint32_t v;
+		size_t i;
 
 		v = pool_rand32(pool);
 
-		b[0] = alphabet[(v >> 0) & 63];
-		b[1] = alphabet[(v >> 6) & 63];
-
-		switch (c) {
-		case 2:
-			b[2] = alphabet[(v >> 12) & 63];
-			break;
-		case 1:
-			b[2] = '=';
-			break;
+		for (i = 0; i < (c * 8) / 6; i++) {
+			b[i] = alphabet[v & 63];
+			v >>= 3;
 		}
 
-		b[3] = '=';
+		/* last character has only a limited number of bits */
+		size_t remaining = c * 8 - i * 6;
+		unsigned int mask = ~((1u << (6 - remaining)) - 1);
+
+		b[i++] = alphabet[(v & 63) & mask];
+
+		for (; i < 4; i++)
+			b[i] = '=';
 
 		bs = 4;
 		if (bs > ps)
