@@ -90,7 +90,7 @@ static int time_get_monotonic_internal_mach(struct timespec *tp)
 int time_get_monotonic(struct timespec *ts)
 {
 #ifdef ARSDK_MACH_HAS_CLOCK_GETTIME
-	if (clock_gettime)
+	if (&clock_gettime)
 		return clock_gettime(CLOCK_MONOTONIC, ts);
 #endif
 	return time_get_monotonic_internal_mach(ts);
