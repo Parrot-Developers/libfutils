@@ -54,14 +54,14 @@ struct mbox *mbox_new(size_t msg_size);
 /**
  * @brief Destroy a mail box
  *
- * @param[in] mbox Handle of the mail box
+ * @param[in] box Handle of the mail box
  */
 void mbox_destroy(struct mbox *box);
 
 /**
  * @brief Get file descriptor for received data
  *
- * @param[in] mbox Handle of the mail box
+ * @param[in] box Handle of the mail box
  *
  * @return The file descriptor on success
  *         -1 on error
@@ -71,7 +71,7 @@ int mbox_get_read_fd(const struct mbox *box);
 /**
  * @brief Write a message in the mail box
  *
- * @param[in] mbox Handle of the mail box
+ * @param[in] box Handle of the mail box
  * @param[in] msg The message to send
  *
  * @return 0 on success,
@@ -101,7 +101,7 @@ int mbox_push_block(struct mbox *box, const void *msg,
 /**
  * @brief read a message from the mail box
  *
- * @param[in] mbox Handle of the mail box
+ * @param[in] box Handle of the mail box
  * @param[out] msg The message read
  *
  * @return 0 on success,
