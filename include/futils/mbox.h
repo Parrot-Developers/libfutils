@@ -32,6 +32,8 @@
 #ifndef _MBOX_H_
 #define _MBOX_H_
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
