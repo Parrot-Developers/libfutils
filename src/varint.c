@@ -115,7 +115,7 @@ static int futils_varint_write(uint8_t *dst, size_t dst_len,
 int futils_varint_read_u16(const uint8_t *src, size_t src_len,
 		uint16_t *val, size_t *val_len)
 {
-	uint64_t val64;
+	uint64_t val64 = 0;
 	int res;
 
 	if (val == NULL)
@@ -137,7 +137,7 @@ int futils_varint_write_u16(uint8_t *dst, size_t dst_len,
 int futils_varint_read_i16(const uint8_t *src, size_t src_len,
 		int16_t *val, size_t *val_len)
 {
-	uint64_t val64;
+	uint64_t val64 = 0;
 	int res;
 
 	if (val == NULL)
@@ -163,7 +163,7 @@ int futils_varint_write_i16(uint8_t *dst, size_t dst_len,
 int futils_varint_read_u32(const uint8_t *src, size_t src_len,
 		uint32_t *val, size_t *val_len)
 {
-	uint64_t val64;
+	uint64_t val64 = 0;
 	int res;
 
 	if (val == NULL)
@@ -185,7 +185,7 @@ int futils_varint_write_u32(uint8_t *dst, size_t dst_len,
 int futils_varint_read_i32(const uint8_t *src, size_t src_len,
 		int32_t *val, size_t *val_len)
 {
-	uint64_t val64;
+	uint64_t val64 = 0;
 	int res;
 
 	if (val == NULL)
@@ -224,7 +224,7 @@ int futils_varint_write_u64(uint8_t *dst, size_t dst_len,
 int futils_varint_read_i64(const uint8_t *src, size_t src_len,
 		int64_t *val, size_t *val_len)
 {
-	uint64_t val64;
+	uint64_t val64 = 0;
 	int res;
 
 	if (val == NULL)
