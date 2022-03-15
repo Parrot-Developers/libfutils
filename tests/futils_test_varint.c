@@ -444,4 +444,5 @@ CU_TestInfo s_varint_tests[] = {
 	{(char *)"varint_i32", &test_varint_i32},
 	{(char *)"varint_u64", &test_varint_u64},
 	{(char *)"varint_i64", &test_varint_i64},
+	CU_TEST_INFO_NULL,
 };
