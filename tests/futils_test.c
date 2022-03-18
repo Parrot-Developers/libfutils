@@ -41,6 +41,7 @@ extern CU_TestInfo s_random_tests[];
 extern CU_TestInfo s_varint_tests[];
 extern CU_TestInfo s_timetools_tests[];
 extern CU_TestInfo s_safew_tests[];
+extern CU_TestInfo s_string_tests[];
 
 static void test_bound(void)
 {
@@ -110,6 +111,14 @@ static CU_SuiteInfo s_suites[] = {
 		.pCleanupFunc = NULL,
 		.pTests = s_timetools_tests
 	},
+#if defined(linux) && !defined(__ANDROID__)
+	{
+		.pName = (char *)"string",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_string_tests
+	},
+#endif
 #ifndef _WIN32
 	{
 		.pName = (char *)"safew",

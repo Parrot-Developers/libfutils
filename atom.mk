@@ -23,6 +23,9 @@ LOCAL_SRC_FILES := \
 
 ifeq ("$(TARGET_OS)", "linux")
   LOCAL_SRC_FILES += src/inotify.c
+  ifneq ("$(TARGET_OS_FLAVOUR)", "android")
+    LOCAL_SRC_FILES += src/string.c
+  endif
 endif
 ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
   LOCAL_SRC_FILES += src/dynmbox.c
@@ -54,6 +57,13 @@ LOCAL_SRC_FILES := \
 	tests/futils_test_systimetools.c \
 	tests/futils_test_timetools.c \
 	tests/futils_test_varint.c
+
+ifeq ("$(TARGET_OS)", "linux")
+  ifneq ("$(TARGET_OS_FLAVOUR)", "android")
+    LOCAL_SRC_FILES += tests/futils_test_string.c
+  endif
+endif
+
 
 ifneq ("$(TARGET_OS)","windows")
 LOCAL_SRC_FILES += \
