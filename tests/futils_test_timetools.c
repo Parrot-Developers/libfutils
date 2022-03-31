@@ -57,6 +57,32 @@ static void test_timetools_monotonic(void)
 	CU_ASSERT(delta >= 0);
 }
 
+static void test_timetools_realtime(void)
+{
+	struct timespec ts_start;
+	struct timespec ts_end;
+	uint64_t start;
+	uint64_t end;
+	int64_t delta;
+	int rc;
+
+	rc = time_get_realtime(&ts_start);
+	CU_ASSERT_EQUAL(rc, 0);
+
+	rc = time_timespec_to_ns(&ts_start, &start);
+	CU_ASSERT_EQUAL(rc, 0);
+
+	rc = time_get_realtime(&ts_end);
+	CU_ASSERT_EQUAL(rc, 0);
+
+	rc = time_timespec_to_ns(&ts_end, &end);
+	CU_ASSERT_EQUAL(rc, 0);
+
+	delta = end - start;
+
+	CU_ASSERT(delta >= 0);
+}
+
 static void test_timetools_cmp(void)
 {
 	struct timespec ts_0;
@@ -235,12 +261,53 @@ static void test_timetools_msleep(void)
 	}
 }
 
+static void test_time_monotonic_to_realtime_ms(void)
+{
+	struct timespec ts_start;
+	struct timespec ts_end;
+	uint64_t mt_time_start_ms;
+	uint64_t mt_time_end_ms;
+	uint64_t rt_time_start_ms;
+	uint64_t rt_time_end_ms;
+	int rc;
+
+	rc = time_monotonic_to_realtime_ms(0, NULL);
+	CU_ASSERT_EQUAL(rc, -EINVAL);
+
+	rc = time_monotonic_to_realtime_ms(0, &rt_time_start_ms);
+	CU_ASSERT_EQUAL(rc, 0);
+
+	/* mt start */
+	rc = time_get_monotonic(&ts_start);
+	rc = time_timespec_to_ms(&ts_start, &mt_time_start_ms);
+
+	/* It is assumed that any timestamp in the real-time clock reference
+	 * is greater or equal than its equivalent in the monotonic clock. */
+	rc = time_monotonic_to_realtime_ms(mt_time_start_ms, &rt_time_start_ms);
+	CU_ASSERT_EQUAL(rc, 0);
+	CU_ASSERT(rt_time_start_ms >= mt_time_start_ms);
+
+	do_msleep(10);
+
+	/* mt end */
+	rc = time_get_monotonic(&ts_end);
+	rc = time_timespec_to_ms(&ts_end, &mt_time_end_ms);
+
+	rc = time_monotonic_to_realtime_ms(mt_time_end_ms, &rt_time_end_ms);
+	CU_ASSERT_EQUAL(rc, 0);
+	CU_ASSERT(rt_time_end_ms >= mt_time_end_ms);
+	CU_ASSERT(rt_time_end_ms >= rt_time_start_ms);
+}
+
 CU_TestInfo s_timetools_tests[] = {
 	{(char *)"monotonic", &test_timetools_monotonic},
+	{(char *)"realtime", &test_timetools_realtime},
 	{(char *)"cmp", &test_timetools_cmp},
 	{(char *)"diff", &test_timetools_diff},
 	{(char *)"add", &test_timetools_add},
 	{(char *)"convert", &test_timetools_convert},
 	{(char *)"msleep", &test_timetools_msleep},
+	{(char *)"monotonic_to_realtime_ms",
+		 &test_time_monotonic_to_realtime_ms},
 	CU_TEST_INFO_NULL,
 };

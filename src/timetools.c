@@ -434,3 +434,57 @@ int time_timeval_to_ms(const struct timeval *value, uint32_t *ms)
 	*ms = (uint32_t)value->tv_sec * 1000UL + (value->tv_usec / 1000UL);
 	return 0;
 }
+
+int time_monotonic_to_realtime_ms(uint64_t mt_ms, uint64_t *rt_ms)
+{
+	int ret;
+
+	/* monotonic */
+	uint64_t mt_now1_us;
+	uint64_t mt_now2_us;
+	struct timespec mt_now1_ts;
+	struct timespec mt_now2_ts;
+	uint64_t mt_now_ms;
+
+	/* realtime */
+	uint64_t rt_now_us;
+	uint64_t rt_now_ms;
+	struct timespec rt_now_ts;
+	uint64_t duration_ms;
+
+	if (!rt_ms)
+		return -EINVAL;
+
+	/* The monotonic clock is measured twice: before and after measuring
+	 * the real-time clock and then averaged to increase precision */
+	ret = time_get_monotonic(&mt_now1_ts);
+	if (ret < 0)
+		return ret;
+	ret = time_get_realtime(&rt_now_ts);
+	if (ret < 0)
+		return ret;
+	ret = time_get_monotonic(&mt_now2_ts);
+	if (ret < 0)
+		return ret;
+
+	/* monotonic */
+	ret = time_timespec_to_us(&mt_now1_ts, &mt_now1_us);
+	if (ret < 0)
+		return ret;
+	ret = time_timespec_to_us(&mt_now2_ts, &mt_now2_us);
+	if (ret < 0)
+		return ret;
+	mt_now_ms = (mt_now1_us + mt_now2_us + 1000) / 2000;
+
+	duration_ms = mt_now_ms - mt_ms;
+
+	/* realtime */
+	ret = time_timespec_to_us(&rt_now_ts, &rt_now_us);
+	if (ret < 0)
+		return ret;
+	rt_now_ms = (rt_now_us + 500) / 1000;
+
+	*rt_ms = rt_now_ms - duration_ms;
+
+	return 0;
+}

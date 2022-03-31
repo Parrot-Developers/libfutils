@@ -200,6 +200,15 @@ int time_timeval_to_timespec(const struct timeval *tv, struct timespec *ts);
 int time_timeval_to_ms(const struct timeval *value, uint32_t *ms);
 
 /**
+ * @brief Convert a monotonic timestamp to its realtime value in msec.
+ *
+ * @param mt_ms monotonic timestamp in msec
+ * @param rt_ms pointer to the realtime timestamp in msec
+ * @return 0 on success, negative errno value on errors
+ */
+int time_monotonic_to_realtime_ms(uint64_t mt_ms, uint64_t *rt_ms);
+
+/**
  * @brief Suspend execution of the calling thread
  *
  * @param ms milliseconds at least to wait
