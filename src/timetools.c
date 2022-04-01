@@ -82,8 +82,8 @@ int time_get_realtime(struct timespec *ts)
 	/* shift from Windows epoch to Unix epoch */
 	t -= windows_unix_delta_as_100ns;
 
-	ts.tv_sec = (time_t)(t / sec_as_100ns);
-	ts.tv_nsec = (long)((t % sec_as_100ns) * 100);
+	ts->tv_sec = (time_t)(t / sec_as_100ns);
+	ts->tv_nsec = (long)((t % sec_as_100ns) * 100);
 
 	return 0;
 }
