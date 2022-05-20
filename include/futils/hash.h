@@ -64,15 +64,17 @@ struct hash {
 	struct hash_entry **buckets;	/* hash table buckets */
 	uint32_t size;			/* hash table size */
 	struct list_node entries;	/* node entries */
+	void (*hfree)(void *);	/* allocator free callback */
 };
 
 /**
  * create a new hash table
  * @param hash
  * @param size
+ * @param hfree allocator free callback
  * @return 0 on success
  */
-int futils_hash_init(struct hash *hash, size_t size);
+int futils_hash_init(struct hash *hash, size_t size, void (*hfree)(void *));
 
 /**
  * destroy hash table
@@ -146,7 +148,7 @@ int futils_hash_lookup_const(const struct hash *hash, uint32_t key,
  * we need symbol names to be prefixed only, not the actual definition
  * in the header */
 
-#define hash_init(_hash, _size) futils_hash_init((_hash), (_size))
+#define hash_init(_hash, _size) futils_hash_init((_hash), (_size), NULL)
 
 #define hash_destroy(_hash) futils_hash_destroy((_hash))
 

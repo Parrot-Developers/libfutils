@@ -70,7 +70,7 @@ static uint32_t hash_32(uint32_t key)
 	return hash;
 }
 
-int futils_hash_init(struct hash *hash, size_t size)
+int futils_hash_init(struct hash *hash, size_t size, void (*hfree)(void *))
 {
 	size_t i;
 	int ret;
@@ -96,6 +96,10 @@ int futils_hash_init(struct hash *hash, size_t size)
 		goto error;
 	}
 
+	/* set allocator free callback */
+	if (hfree)
+		hash->hfree = hfree;
+
 	list_init(&hash->entries);
 	return 0;
 
@@ -116,6 +120,8 @@ int futils_hash_remove_all(struct hash *hash)
 		while (entry) {
 			next = entry->next;
 			list_del(&entry->node);
+			if (hash->hfree)
+				hash->hfree(entry->data);
 			free(entry);
 			entry = next;
 		}
@@ -309,6 +315,8 @@ int futils_hash_remove(struct hash *tab, uint32_t key)
 		prev->next = entry->next;
 
 	list_del(&entry->node);
+	if (tab->hfree)
+		tab->hfree(entry->data);
 	free(entry);
 	return 0;
 }
