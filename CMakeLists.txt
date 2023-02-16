@@ -30,4 +30,7 @@ if(WIN32)
   target_link_libraries(futils ws2_32)
 endif()
 
-target_link_libraries(futils ulog futils_compiler_flags)
+target_link_libraries(futils 
+                        ulog 
+                        futils_compiler_flags
+)
