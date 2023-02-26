@@ -18,6 +18,9 @@ add_library(futils_compiler_flags INTERFACE)
 target_compile_features(futils_compiler_flags INTERFACE cxx_std_11)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+set_target_properties(h264 PROPERTIES
+                    POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
+)
 
 target_include_directories(futils PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
