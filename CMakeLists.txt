@@ -4,21 +4,32 @@ project(libfutils VERSION 1.0)
 set(DEFS "_FILE_OFFSET_BITS=64")
 
 set(LIB_SOURCES
-    src/dynmbox.c
     src/hash.c
     src/mbox.c
     src/systimetools.c
     src/timetools.c
     src/random.c
     src/varint.c
+    src/dynmbox.c
 )
+if(UNIX)
+  set(LIB_SOURCES
+        ${LIB_SOURCES}
+        src/fdutils.c
+        src/fs.c
+        src/safew.c
+        src/synctools.c
+        src/inotify.c
+        src/string.c
+  )
+endif()
 
 add_library(futils ${LIB_SOURCES})
 add_library(futils_compiler_flags INTERFACE)
 target_compile_features(futils_compiler_flags INTERFACE cxx_std_11)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-set_target_properties(h264 PROPERTIES
+set_target_properties(futils PROPERTIES
                     POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
 )
 
