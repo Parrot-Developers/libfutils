@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 project(futils VERSION 1.0)
 
+
+# checks if set up rpath exists for install
+if(COMMAND set_up_rpath)
+    set_up_rpath()
+else()
+    message("Set up rpath not defined!")
+endif()
+
 set(DEFS "_FILE_OFFSET_BITS=64")
 
 set(LIB_SOURCES
@@ -31,6 +39,7 @@ if(WIN32)
 endif()
 
 target_link_libraries(${PROJECT_NAME} 
+                        PRIVATE
                       ulog 
 )
 
