@@ -1,16 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(futils VERSION 1.0)
 
-
-# checks if set up rpath exists for install
-if(COMMAND set_up_rpath)
-    set_up_rpath()
-else()
-    message("Set up rpath not defined!")
-endif()
-
 set(DEFS "_FILE_OFFSET_BITS=64")
-
 
 list(APPEND LIB_SOURCES
     src/hash.c 
@@ -32,6 +23,10 @@ if(UNIX)
     if(ANDROID)
         list(APPEND LIB_SOURCES
         src/string.c
+        )
+    else()
+        list(APPEND LIB_SOURCES
+            src/dynmbox.c
         )
     endif()
 
@@ -60,6 +55,13 @@ endif()
 
 add_library(${PROJECT_NAME} ${LIB_SOURCES})
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
+
+# checks if set up rpath exists for install
+if(COMMAND set_up_rpath)
+    set_up_rpath()
+else()
+    message("Set up rpath not defined!")
+endif()
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 set_target_properties(futils PROPERTIES
