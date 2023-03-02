@@ -11,21 +11,60 @@ endif()
 
 set(DEFS "_FILE_OFFSET_BITS=64")
 
-set(LIB_SOURCES
-    src/dynmbox.c
-    src/hash.c
-    src/mbox.c
-    src/systimetools.c
-    src/timetools.c
-    src/random.c
+
+list(APPEND LIB_SOURCES
+    src/hash.c 
+    src/mbox.c 
+    src/systimetools.c 
+    src/timetools.c 
+    src/random.c 
     src/varint.c
-    src/fdutils.c
 )
+
+list(APPEND LIB_DEPENDS
+    ulog
+)
+
+if(UNIX)
+    list(APPEND LIB_SOURCES
+    src/inotify.c
+    )
+    if(ANDROID)
+        list(APPEND LIB_SOURCES
+        src/string.c
+        )
+    endif()
+
+else()
+    list(APPEND LIB_SOURCES
+        src/dynmbox.c
+        )
+
+endif()
+
+
+
+if(NOT WIN32)
+    list(APPEND LIB_SOURCES
+	src/fdutils.c 
+	src/fs.c 
+	src/safew.c 
+	src/synctools.c
+        )
+
+else()
+    list(APPEND LIB_DEPENDS
+        ws2_32
+        )
+endif()
 
 add_library(${PROJECT_NAME} ${LIB_SOURCES})
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+set_target_properties(futils PROPERTIES
+                    POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
+)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -34,18 +73,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${DEFS})
 
-if(WIN32)
 target_link_libraries(${PROJECT_NAME} 
                         PRIVATE
-                        ws2_32
-                        ulog 
+                        ${LIB_DEPENDS}
                         )
-else()
-target_link_libraries(${PROJECT_NAME} 
-                      PRIVATE
-                      ulog 
-                    )
-endif()
 
 install(TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}-targets
