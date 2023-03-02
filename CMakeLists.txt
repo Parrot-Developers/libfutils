@@ -12,15 +12,25 @@ endif()
 set(DEFS "_FILE_OFFSET_BITS=64")
 
 set(LIB_SOURCES
-    src/dynmbox.c
     src/hash.c
     src/mbox.c
     src/systimetools.c
     src/timetools.c
     src/random.c
     src/varint.c
-    src/fdutils.c
+    src/dynmbox.c
 )
+if(UNIX)
+  set(LIB_SOURCES
+        ${LIB_SOURCES}
+        src/fdutils.c
+        src/fs.c
+        src/safew.c
+        src/synctools.c
+        src/inotify.c
+        src/string.c
+  )
+endif()
 
 add_library(${PROJECT_NAME} ${LIB_SOURCES})
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
