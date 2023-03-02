@@ -35,6 +35,14 @@
 
 #include "futils/fdutils.h"
 
+#ifdef _WIN32
+#define FD_CLOEXEC	1
+#define F_GETFD		1		/**< Get file descriptor flags */
+#define F_SETFD		2		/**< Set file descriptor flags */
+#define F_GETFL		3		/**< Get file status flags */
+#define F_SETFL		4		/**< Set file status flags */
+#endif
+
 int fd_set_close_on_exec(int fd)
 {
 	int old, ret;
