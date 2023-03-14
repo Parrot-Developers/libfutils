@@ -53,7 +53,7 @@ else()
         )
 endif()
 
-add_library(${PROJECT_NAME} ${LIB_SOURCES})
+add_library(${PROJECT_NAME} SHARED ${LIB_SOURCES})
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_11)
 
 # checks if set up rpath exists for install
@@ -64,7 +64,7 @@ else()
 endif()
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-set_target_properties(futils PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
                     POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
 )
 
