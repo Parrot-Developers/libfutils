@@ -31,6 +31,7 @@
 
 #include "futils/string.h"
 
+#include <string.h>
 #include <errno.h>
 #include <iconv.h>
 #include <wchar.h>
