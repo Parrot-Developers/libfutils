@@ -42,6 +42,8 @@ extern CU_TestInfo s_varint_tests[];
 extern CU_TestInfo s_timetools_tests[];
 extern CU_TestInfo s_safew_tests[];
 extern CU_TestInfo s_string_tests[];
+extern CU_TestInfo s_fs_cpp_tests[];
+extern CU_TestInfo s_string_cpp_tests[];
 
 static void test_bound(void)
 {
@@ -117,6 +119,20 @@ static CU_SuiteInfo s_suites[] = {
 		.pInitFunc = NULL,
 		.pCleanupFunc = NULL,
 		.pTests = s_string_tests
+	},
+#endif
+#ifndef __LITEOS__
+	{
+		.pName = (char *)"string_cpp",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_string_cpp_tests
+	},
+	{
+		.pName = (char *)"fs_cpp",
+		.pInitFunc = NULL,
+		.pCleanupFunc = NULL,
+		.pTests = s_fs_cpp_tests
 	},
 #endif
 #ifndef _WIN32

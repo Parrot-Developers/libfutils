@@ -38,6 +38,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "futils/futils.h"
+#include "futils/futils.hpp"
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
 #include <CUnit/Automated.h>

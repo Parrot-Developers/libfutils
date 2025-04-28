@@ -34,8 +34,13 @@
 #include <stdio.h>
 
 #define SAFEW_TMP_SUFFIX ".tmp"
+#define SAFEW_CRC_SUFFIX ".crc"
 /* exclude final '\0' from char sizeof */
 #define SAFEW_TMP_SUFFIX_SIZE (sizeof(SAFEW_TMP_SUFFIX) - 1)
+#define SAFEW_CRC_SUFFIX_SIZE (sizeof(SAFEW_CRC_SUFFIX) - 1)
+#define SAFEW_CRC_TMP_SUFFIX_SIZE (sizeof(SAFEW_TMP_SUFFIX) + \
+				   sizeof(SAFEW_CRC_SUFFIX) - 2)
+
 #define SAFEW_PATH_MAX_LEN 128
 #ifdef THREADX_OS
 #define SAFEW_BUFFER_SIZE 128
@@ -46,6 +51,11 @@ struct futils_safew_file {
 	char path[SAFEW_PATH_MAX_LEN];
 	char tmp_path[SAFEW_PATH_MAX_LEN + SAFEW_TMP_SUFFIX_SIZE];
 	int failure;
+};
+
+struct futils_safew_crc {
+	char tmp_path[SAFEW_PATH_MAX_LEN + SAFEW_CRC_TMP_SUFFIX_SIZE];
+	char path[SAFEW_PATH_MAX_LEN + SAFEW_CRC_SUFFIX_SIZE];
 };
 
 #endif /* _FUTILS_SAFEW_TYPES_H */

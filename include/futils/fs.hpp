@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2019 Parrot S.A.
+ * Copyright (c) 2022 Parrot S.A.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,26 +23,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @file futils.hpp
+ * @file string.hpp
  *
- * @brief utility C++ functions & macro
+ * @brief File system utilities for C++
  *
  *****************************************************************************/
 
-#ifndef _FUTILS_HPP_
-#define _FUTILS_HPP_
+#pragma once
 
-#if defined(__cplusplus)
+#include <string>
 
-#include <futils/fs.hpp>
-#include <futils/string.hpp>
+namespace futils
+{
 
-/** Disable copy constructor and assignment operator */
-#define FUTILS_DISABLE_COPY(_cls) \
-	private: \
-		_cls(const _cls &); \
-		_cls &operator=(const _cls &);
+namespace fs
+{
 
-#endif /* __cplusplus */
+/**
+ * @brief Get the current directory of path
+ * @param path Filename
+ * @return The directory of #path, or "." on on error
+ */
+std::string dirname(const std::string &path);
 
-#endif /* _FUTILS_HPP_ */
+/**
+ * @brief Get the base name of path
+ * @param path Filename
+ * @return The base name of #path, or ""
+ */
+std::string basename(const std::string &path);
+
+} // fs
+
+} // futils

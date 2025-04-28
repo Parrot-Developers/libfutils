@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2019 Parrot S.A.
+ * Copyright (c) 2022 Parrot S.A.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,26 +23,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @file futils.hpp
+ * @file string.cpp
  *
- * @brief utility C++ functions & macro
+ * @brief C++ string utilities
  *
- *****************************************************************************/
+ ******************************************************************************/
 
-#ifndef _FUTILS_HPP_
-#define _FUTILS_HPP_
 
-#if defined(__cplusplus)
+#include "futils/futils.hpp"
 
-#include <futils/fs.hpp>
-#include <futils/string.hpp>
+namespace futils
+{
 
-/** Disable copy constructor and assignment operator */
-#define FUTILS_DISABLE_COPY(_cls) \
-	private: \
-		_cls(const _cls &); \
-		_cls &operator=(const _cls &);
+namespace string
+{
 
-#endif /* __cplusplus */
+bool startsWith(const std::string &fullString, const std::string &prefix)
+{
+	return fullString.length() >= prefix.length()
+	       && fullString.compare(
+		       0,
+		       prefix.length(),
+		       prefix) == 0;
+}
 
-#endif /* _FUTILS_HPP_ */
+bool endsWith(const std::string &fullString, const std::string &suffix)
+{
+	return fullString.length() >= suffix.length()
+		&& fullString.compare(
+			fullString.length() - suffix.length(),
+			suffix.length(),
+			suffix) == 0;
+}
+
+} // string
+} // futils

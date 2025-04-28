@@ -1,5 +1,5 @@
-/******************************************************************************
- * Copyright (c) 2019 Parrot S.A.
+/**
+ * Copyright (c) 2022 Parrot S.A.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,26 +23,49 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @file futils.hpp
+ * @file futils_tests_fs.cpp
  *
- * @brief utility C++ functions & macro
+ * @brief libfutils filesystem unit tests.
  *
- *****************************************************************************/
+ */
 
-#ifndef _FUTILS_HPP_
-#define _FUTILS_HPP_
+#include "futils_test.h"
+#include "futils/futils.hpp"
 
-#if defined(__cplusplus)
+void test_normal_path()
+{
+	CU_ASSERT_EQUAL(futils::fs::dirname("/path/to/some/file.txt"),
+			"/path/to/some");
+	CU_ASSERT_EQUAL(futils::fs::dirname("../../"),
+			"..");
+	CU_ASSERT_EQUAL(futils::fs::dirname("/abs/path/to/file.txt"),
+			"/abs/path/to");
+	CU_ASSERT_EQUAL(futils::fs::dirname("/abs/path/to////file"),
+			"/abs/path/to");
+	CU_ASSERT_EQUAL(futils::fs::dirname("/abs/path/to/dir/"),
+			"/abs/path/to");
+}
 
-#include <futils/fs.hpp>
-#include <futils/string.hpp>
+void test_dot_path()
+{
+	CU_ASSERT_EQUAL(futils::fs::dirname("./path.txt"), ".");
+	CU_ASSERT_EQUAL(futils::fs::dirname(""), ".");
+	CU_ASSERT_EQUAL(futils::fs::dirname("..."), ".");
+	CU_ASSERT_EQUAL(futils::fs::dirname("qjshdjsqhdkjqhsd"), ".");
+	CU_ASSERT_EQUAL(futils::fs::dirname("qjshdjsqhdkjqhsd/"), ".");
+}
 
-/** Disable copy constructor and assignment operator */
-#define FUTILS_DISABLE_COPY(_cls) \
-	private: \
-		_cls(const _cls &); \
-		_cls &operator=(const _cls &);
+void test_root_path()
+{
+	CU_ASSERT_EQUAL(futils::fs::dirname("/"), "/");
+	CU_ASSERT_EQUAL(futils::fs::dirname("//"), "//");
+	CU_ASSERT_EQUAL(futils::fs::dirname("//tst"), "//");
+	CU_ASSERT_EQUAL(futils::fs::dirname("/.//."), "/.");
+}
 
-#endif /* __cplusplus */
-
-#endif /* _FUTILS_HPP_ */
+CU_TestInfo s_fs_cpp_tests[] = {
+	{(char *)"normal_path", &test_normal_path},
+	{(char *)"dot_path", &test_dot_path},
+	{(char *)"root_path", &test_root_path},
+	CU_TEST_INFO_NULL,
+};

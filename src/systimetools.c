@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include "futils/systimetools.h"
 
 #define ULOG_TAG systimetools
@@ -574,16 +575,21 @@ int time_local_set(uint64_t epoch_sec, int32_t utc_offset_sec)
 	tv.tv_sec = epoch_sec;
 
 	ret = settimeofday(&tv, NULL);
+#ifndef BUILD_LIBPUTILS
 	if (ret < 0)
 		return -errno;
+#else
+	if (ret < 0)
+		ret = -errno;
 
-#ifdef BUILD_LIBPUTILS
+	int sprop_ret;
 	/* utc offset */
 	char value[SYS_PROP_VALUE_MAX];
-	snprintf(value, sizeof(value), "%d", utc_offset_sec);
-	ret = sys_prop_set(UTC_OFFSET_PROP_NAME, value);
-	if (ret < 0)
-		return ret;
+	snprintf(value, sizeof(value), "%" PRIi32, utc_offset_sec);
+	sprop_ret = sys_prop_set(UTC_OFFSET_PROP_NAME, value);
+	/* First report settimeofday failure */
+	return ret < 0 ? ret : sprop_ret;
+
 #endif
 
 	return 0;

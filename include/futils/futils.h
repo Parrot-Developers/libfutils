@@ -76,6 +76,14 @@
 #define BOUND(a, m, M) FUTILS_BOUND(a, m, M)
 #endif
 
+
+/**
+ * macro used to get the type of a struct member
+ */
+#ifndef TYPEOF_STRUCT_MEMBER
+#define TYPEOF_STRUCT_MEMBER(s, m) typeof(((s *)0)->m)
+#endif
+
 /**
  * STATIC_ASSERT() can be used to perform many compile-time assertions:
  * type sizes, etc...
@@ -124,6 +132,5 @@
 #include <futils/varint.h>
 #include <futils/safew.h>
 #include <futils/string.h>
-#include <futils/futils.hpp>
 
 #endif /*_FUTILS_H_ */

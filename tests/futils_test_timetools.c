@@ -261,6 +261,44 @@ static void test_timetools_msleep(void)
 	}
 }
 
+static void test_time_monotonic_to_realtime_us(void)
+{
+	struct timespec ts_start;
+	struct timespec ts_end;
+	uint64_t mt_time_start_us;
+	uint64_t mt_time_end_us;
+	uint64_t rt_time_start_us;
+	uint64_t rt_time_end_us;
+	int rc;
+
+	rc = time_monotonic_to_realtime_us(0, NULL);
+	CU_ASSERT_EQUAL(rc, -EINVAL);
+
+	rc = time_monotonic_to_realtime_us(0, &rt_time_start_us);
+	CU_ASSERT_EQUAL(rc, 0);
+
+	/* mt start */
+	rc = time_get_monotonic(&ts_start);
+	rc = time_timespec_to_us(&ts_start, &mt_time_start_us);
+
+	/* It is assumed that any timestamp in the real-time clock reference
+	 * is greater or equal than its equivalent in the monotonic clock. */
+	rc = time_monotonic_to_realtime_us(mt_time_start_us, &rt_time_start_us);
+	CU_ASSERT_EQUAL(rc, 0);
+	CU_ASSERT(rt_time_start_us >= mt_time_start_us);
+
+	do_msleep(10);
+
+	/* mt end */
+	rc = time_get_monotonic(&ts_end);
+	rc = time_timespec_to_us(&ts_end, &mt_time_end_us);
+
+	rc = time_monotonic_to_realtime_us(mt_time_end_us, &rt_time_end_us);
+	CU_ASSERT_EQUAL(rc, 0);
+	CU_ASSERT(rt_time_end_us >= mt_time_end_us);
+	CU_ASSERT(rt_time_end_us >= rt_time_start_us);
+}
+
 static void test_time_monotonic_to_realtime_ms(void)
 {
 	struct timespec ts_start;
@@ -309,5 +347,7 @@ CU_TestInfo s_timetools_tests[] = {
 	{(char *)"msleep", &test_timetools_msleep},
 	{(char *)"monotonic_to_realtime_ms",
 		 &test_time_monotonic_to_realtime_ms},
+	{(char *)"monotonic_to_realtime_us",
+		 &test_time_monotonic_to_realtime_us},
 	CU_TEST_INFO_NULL,
 };

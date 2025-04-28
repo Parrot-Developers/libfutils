@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2019 Parrot S.A.
+ * Copyright (c) 2022 Parrot S.A.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,26 +23,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @file futils.hpp
+ * @file fs.cpp
  *
- * @brief utility C++ functions & macro
+ * @brief C++ filesystem utilities
  *
- *****************************************************************************/
+ ******************************************************************************/
 
-#ifndef _FUTILS_HPP_
-#define _FUTILS_HPP_
+#include <libgen.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
-#if defined(__cplusplus)
+#include <cstring>
+#include <fstream>
+#include <string>
 
-#include <futils/fs.hpp>
-#include <futils/string.hpp>
+#include "futils/futils.hpp"
 
-/** Disable copy constructor and assignment operator */
-#define FUTILS_DISABLE_COPY(_cls) \
-	private: \
-		_cls(const _cls &); \
-		_cls &operator=(const _cls &);
+namespace futils
+{
 
-#endif /* __cplusplus */
+namespace fs
+{
 
-#endif /* _FUTILS_HPP_ */
+std::string dirname(const std::string &path)
+{
+	char *str = strdup(path.c_str());
+	std::string res(::dirname(str));
+	free(str);
+	return res;
+}
+
+/* libgen.h redefine basename to __xpg_basename, if we want to have the correct
+ * symbol name without the preprocessor messing up stuff, first setup a wrapper
+ * and then undef the symbol
+ */
+
+static char *wrap_basename(char *path)
+{
+	return ::basename(path);
+}
+#undef basename
+
+std::string basename(const std::string &path)
+{
+	char *str = strdup(path.c_str());
+	std::string res(wrap_basename(str));
+	free(str);
+	return res;
+}
+
+}
+
+}

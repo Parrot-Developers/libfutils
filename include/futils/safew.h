@@ -53,6 +53,43 @@ struct futils_safew_file;
 struct futils_safew_file *futils_safew_fopen(const char *pathname);
 
 /**
+ * @brief check if the file and its crc are valid and try to recover them
+ * The recovery depends on wich files are present and if valid pair payload/crc
+ * is found:
+ *
+ * p | p |   | c |
+ * a | a |   | r |
+ * y | y |   | c |
+ * l | . |   | . |
+ * o | t | c | t |
+ * a | m | r | m |
+ * d | p | c | p | check pairs            | recovery
+ * --|---|---|---|------------------------|--------------------------
+ * . | . | . | . | none                   | none
+ * X | . | . | . | none                   | erase all
+ * . | X | . | . | none                   | erase all
+ * X | X | . | . | none                   | erase all
+ * . | . | X | . | none                   | erase all
+ * X | . | X | . | payload/crc            | erase all if invalid
+ * . | X | X | . | none                   | erase all
+ * X | X | X | . | payload/crc            | erase payload.tmp or all if invalid
+ * . | . | . | X | none                   | erase all
+ * X | . | . | X | payload/crc.tmp        | move crc.tmp or erase all if invalid
+ * . | X | . | X | pay.tmp/crc.tmp        | move files or erase all if invalid
+ * X | X | . | X | pay.tmp/crc.tmp        | move files or erase all if invalid
+ * . | . | X | X | none                   | erase all
+ * X | . | X | X | pay/crc or pay/crc.tmp | if none is matching erase all
+ * . | X | X | X | pay.tmp/crc.tmp        | move files or erase all if invalid
+ * X | X | X | X | pay.tmp/crc.tmp        | keep the first one if valid,
+ *               |    then payload/crc    | if not keep the second one if valid,
+ *                                        | if not erase all
+ * @param pathname of file to check
+ *
+ * @return 0 if success, -1 on error
+ */
+int futils_safew_file_check(const char *pathname);
+
+/**
  * @brief Safe write fclose without validating new file
  *
  * @param pointer to a safe file write structure
@@ -69,6 +106,15 @@ int futils_safew_fclose_rollback(struct futils_safew_file *safew_fp);
  * @return 0 if success, -1 on error
  */
 int futils_safew_fclose_commit(struct futils_safew_file *safew_fp);
+
+/**
+ * @brief Safe write fclose validating new file and create crc file
+ *
+ * @param pointer to a safe file write structure
+ *
+ * @return 0 if success, -1 on error
+ */
+int futils_safew_fclose_commit_with_crc(struct futils_safew_file *safew_fp);
 
 /**
  * @brief Safe write fprintf

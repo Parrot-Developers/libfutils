@@ -33,9 +33,14 @@
 #include <errno.h>
 #include "futils/timetools.h"
 
+#ifdef BUILD_LIBPUTILS
+#include <putils/properties.h>
+#endif
+
 #define ULOG_TAG timetools
 #include <ulog.h>
 ULOG_DECLARE_TAG(timetools);
+
 
 #ifdef _WIN32
 
@@ -123,24 +128,23 @@ static int time_get_monotonic_internal_mach(struct timespec *tp)
 int time_get_monotonic(struct timespec *ts)
 {
 #ifdef ARSDK_MACH_HAS_CLOCK_GETTIME
-	if (&clock_gettime)
-		return ((clock_gettime(CLOCK_MONOTONIC, ts) < 0) ?
+	return ((clock_gettime(CLOCK_MONOTONIC, ts) < 0) ?
 			-errno :
 			0);
-#endif
+#else
 	return time_get_monotonic_internal_mach(ts);
+#endif
 }
 
 int time_get_realtime(struct timespec *ts)
 {
-	struct timeval tv;
-
 #ifdef ARSDK_MACH_HAS_CLOCK_GETTIME
-	if (clock_gettime)
-		return ((clock_gettime(CLOCK_REALTIME, ts) < 0) ?
+	return ((clock_gettime(CLOCK_REALTIME, ts) < 0) ?
 			-errno :
 			0);
-#endif
+#else
+	struct timeval tv;
+
 	if (gettimeofday(&tv, NULL) < 0)
 		return -errno;
 
@@ -148,6 +152,7 @@ int time_get_realtime(struct timespec *ts)
 	ts->tv_nsec = tv.tv_usec * 1000;
 
 	return 0;
+#endif
 }
 
 #elif defined(THREADX_OS)
@@ -435,7 +440,7 @@ int time_timeval_to_ms(const struct timeval *value, uint32_t *ms)
 	return 0;
 }
 
-int time_monotonic_to_realtime_ms(uint64_t mt_ms, uint64_t *rt_ms)
+static int time_monotonic_to_realtime_us_1(uint64_t mt_us, uint64_t *rt_us)
 {
 	int ret;
 
@@ -444,15 +449,14 @@ int time_monotonic_to_realtime_ms(uint64_t mt_ms, uint64_t *rt_ms)
 	uint64_t mt_now2_us;
 	struct timespec mt_now1_ts;
 	struct timespec mt_now2_ts;
-	uint64_t mt_now_ms;
+	uint64_t mt_now_us;
 
 	/* realtime */
 	uint64_t rt_now_us;
-	uint64_t rt_now_ms;
 	struct timespec rt_now_ts;
-	uint64_t duration_ms;
+	uint64_t duration_us;
 
-	if (!rt_ms)
+	if (!rt_us)
 		return -EINVAL;
 
 	/* The monotonic clock is measured twice: before and after measuring
@@ -474,17 +478,67 @@ int time_monotonic_to_realtime_ms(uint64_t mt_ms, uint64_t *rt_ms)
 	ret = time_timespec_to_us(&mt_now2_ts, &mt_now2_us);
 	if (ret < 0)
 		return ret;
-	mt_now_ms = (mt_now1_us + mt_now2_us + 1000) / 2000;
+	mt_now_us = (mt_now1_us + mt_now2_us + 1) / 2;
 
-	duration_ms = mt_now_ms - mt_ms;
+	duration_us = mt_now_us - mt_us;
 
 	/* realtime */
 	ret = time_timespec_to_us(&rt_now_ts, &rt_now_us);
 	if (ret < 0)
 		return ret;
-	rt_now_ms = (rt_now_us + 500) / 1000;
 
-	*rt_ms = rt_now_ms - duration_ms;
+	*rt_us = rt_now_us - duration_us;
+
+	return 0;
+}
+
+static inline int time_monotonic_to_realtime_us_2(uint64_t mt_us,
+		uint64_t *rt_us,
+		const char *prop_rt0)
+{
+	uint64_t rt0_us;
+
+	errno = 0;
+	rt0_us = strtoll(prop_rt0, NULL, 10);
+	if (errno != 0) {
+		ULOGE("Cannot convert ro.simulator.clock_rt0_us into number");
+		return -EINVAL;
+	}
+
+	*rt_us = mt_us + rt0_us;
+
+	return 0;
+}
+
+int time_monotonic_to_realtime_us(uint64_t mt_us, uint64_t *rt_us)
+{
+
+	if (!rt_us)
+		return -EINVAL;
+
+#ifdef BUILD_LIBPUTILS
+	char prop[SYS_PROP_VALUE_MAX];
+	int len = sys_prop_get("ro.simulator.clock_rt0_us", prop, NULL);
+	if (len > 0)
+		return time_monotonic_to_realtime_us_2(mt_us, rt_us, prop);
+	else
+#endif
+		return time_monotonic_to_realtime_us_1(mt_us, rt_us);
+}
+
+int time_monotonic_to_realtime_ms(uint64_t mt_ms, uint64_t *rt_ms)
+{
+	int ret;
+	uint64_t rt_us = 0;
+
+	if (!rt_ms)
+		return -EINVAL;
+
+	ret = time_monotonic_to_realtime_us(mt_ms * 1000, &rt_us);
+	if (ret < 0)
+		return ret;
+
+	*rt_ms = (rt_us + 500) / 1000;
 
 	return 0;
 }

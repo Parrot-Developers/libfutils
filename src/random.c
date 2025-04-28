@@ -61,7 +61,7 @@ ULOG_DECLARE_TAG(futils_random);
 	(!defined(__STDC_NO_THREADS__) || !__STDC_NO_THREADS__)
 #	include <threads.h>
 #	define HAVE_THREAD_LOCAL 1
-#elif defined(__GNUC__) && defined(__GLIBC__)
+#elif defined(__GNUC__) && (defined(__GLIBC__) || defined(_WIN32))
 #	define thread_local __thread
 #	define HAVE_THREAD_LOCAL 1
 #elif defined(_WIN32)

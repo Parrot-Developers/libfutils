@@ -33,8 +33,8 @@
 #define _TIMETOOLS_H_
 
 #include <stdint.h>
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -200,6 +200,15 @@ int time_timeval_to_timespec(const struct timeval *tv, struct timespec *ts);
 int time_timeval_to_ms(const struct timeval *value, uint32_t *ms);
 
 /**
+ * @brief Convert a monotonic timestamp to its realtime value in usec.
+ *
+ * @param mt_us monotonic timestamp in usec
+ * @param rt_us pointer to the realtime timestamp in usec
+ * @return 0 on success, negative errno value on errors
+ */
+int time_monotonic_to_realtime_us(uint64_t mt_us, uint64_t *rt_us);
+
+/**
  * @brief Convert a monotonic timestamp to its realtime value in msec.
  *
  * @param mt_ms monotonic timestamp in msec
@@ -221,4 +230,3 @@ int time_msleep(uint32_t ms);
 #endif
 
 #endif /* _TIMETOOLS_H_ */
-

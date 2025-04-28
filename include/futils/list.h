@@ -127,9 +127,9 @@ static inline void
 list_add(struct list_node *novel, struct list_node *prev,
 	      struct list_node *next)
 {
-	next->prev = novel;
 	novel->next = next;
 	novel->prev = prev;
+	next->prev = novel;
 	prev->next = novel;
 }
 

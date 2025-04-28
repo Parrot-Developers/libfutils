@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libfutils
 LOCAL_CATEGORY_PATH := libs
-LOCAL_DESCRIPTION := c utility functions
+LOCAL_DESCRIPTION := c/c++ utility functions
 LOCAL_PRIVATE_LIBRARIES := libulog
 LOCAL_CONDITIONAL_PRIVATE_LIBRARIES := OPTIONAL:libputils
 
@@ -31,14 +31,24 @@ ifneq ("$(TARGET_OS)-$(TARGET_OS_FLAVOUR)","linux-android")
   LOCAL_SRC_FILES += src/dynmbox.c
 endif
 
-ifneq ("$(TARGET_OS)","windows")
+ifeq ("$(TARGET_OS)", "hexagon")
+LOCAL_SRC_FILES += src/safew.c
+endif
+
+ifeq ($(filter "hexagon" "windows", "$(TARGET_OS)"),)
 LOCAL_SRC_FILES += \
 	src/fdutils.c \
 	src/fs.c \
 	src/safew.c \
 	src/synctools.c
-else
+else ifeq ("$(TARGET_OS)", "windows")
 LOCAL_LDLIBS += -lws2_32
+endif
+
+ifeq (,$(filter $(TARGET_OS)-$(TARGET_OS_FLAVOUR), baremetal-liteos))
+LOCAL_SRC_FILES += \
+	src/fs.cpp \
+	src/string.cpp
 endif
 
 include $(BUILD_LIBRARY)
@@ -74,6 +84,12 @@ LOCAL_LIBRARIES := libfutils libcunit
 
 ifeq ("$(TARGET_OS)","windows")
   LOCAL_LDLIBS += -lws2_32
+endif
+
+ifeq (,$(filter $(TARGET_OS)-$(TARGET_OS_FLAVOUR), baremetal-liteos))
+LOCAL_SRC_FILES += \
+	tests/futils_test_fs.cpp \
+	tests/futils_test_string.cpp
 endif
 
 include $(BUILD_EXECUTABLE)
