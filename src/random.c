@@ -64,7 +64,7 @@ ULOG_DECLARE_TAG(futils_random);
 #elif defined(__GNUC__) && (defined(__GLIBC__) || defined(_WIN32))
 #	define thread_local __thread
 #	define HAVE_THREAD_LOCAL 1
-#elif defined(_WIN32)
+#elif defined(_WIN32) && (!defined(__GNUC__))
 #	define thread_local __declspec(thread)
 #	define HAVE_THREAD_LOCAL 1
 #else
