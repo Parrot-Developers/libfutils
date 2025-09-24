@@ -13,6 +13,8 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 LOCAL_CFLAGS := -D_FILE_OFFSET_BITS=64
 
+LOCAL_CXXFLAGS := -std=c++11
+
 LOCAL_SRC_FILES := \
 	src/hash.c \
 	src/mbox.c \

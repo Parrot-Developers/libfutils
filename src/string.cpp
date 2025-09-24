@@ -32,6 +32,8 @@
 
 #include "futils/futils.hpp"
 
+#include <algorithm>
+
 namespace futils
 {
 
@@ -54,6 +56,14 @@ bool endsWith(const std::string &fullString, const std::string &suffix)
 			fullString.length() - suffix.length(),
 			suffix.length(),
 			suffix) == 0;
+}
+
+std::string convertToLowerCase(const std::string& s)
+{
+	std::string o(s);
+	std::transform(
+		o.begin(), o.end(), o.begin(), [](unsigned char c) { return std::tolower(c); });
+	return o;
 }
 
 } // string

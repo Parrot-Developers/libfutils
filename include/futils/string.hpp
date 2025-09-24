@@ -55,6 +55,13 @@ bool startsWith(const std::string &fullString, const std::string &prefix);
  */
 bool endsWith(const std::string &fullString, const std::string &suffix);
 
+/**
+ * @brief Convert all characters of a given string to lowercase
+ * @param s String to-be-converted
+ * @return A string with the same characters as s but in lowercase
+ */
+std::string convertToLowerCase(const std::string& s);
+
 } // string
 
 } // futils
