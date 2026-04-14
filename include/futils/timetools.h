@@ -69,6 +69,20 @@ int time_timespec_diff(const struct timespec *start,
 		       struct timespec *diff);
 
 /**
+ * @brief Compute a difference of two timespec values and get sign.
+ *
+ * @param t1 first timespec
+ * @param t2 second timespec
+ * @param diff_us the diff between the two timespec
+ * @param sign of diff (can be NULL ptr)
+ * @return 0 on success, negative errno value on errors
+ */
+int time_timespec_diff_us(const struct timespec *t1,
+			  const struct timespec *t2,
+			  uint64_t *duration_diff_us,
+			  int *sign_diff);
+
+	/**
  * @brief Check if the diff of two timespec values is in a specific range.
  *
  * @param t1 first timespec

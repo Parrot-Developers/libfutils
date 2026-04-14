@@ -255,6 +255,43 @@ int time_timespec_diff(const struct timespec *start,
 	return 0;
 }
 
+int time_timespec_diff_us(const struct timespec *t1,
+			  const struct timespec *t2,
+			  uint64_t *duration_diff_us,
+			  int *sign_diff)
+{
+	int ret;
+	struct timespec duration_diff_ts;
+
+	if (time_timespec_cmp(t1, t2) == 1) {
+		ret = time_timespec_diff(t2, t1, &duration_diff_ts);
+		if (ret < 0) {
+			ULOGE("failed differentiate timespec (%s)",
+			      strerror(-ret));
+			return ret;
+		}
+		if (sign_diff)
+			*sign_diff = 1;
+	} else {
+		ret = time_timespec_diff(t1, t2, &duration_diff_ts);
+		if (ret < 0) {
+			ULOGE("failed differentiate timespec (%s)",
+			      strerror(-ret));
+			return ret;
+		}
+		if (sign_diff)
+			*sign_diff = -1;
+	}
+
+	ret = time_timespec_to_us(&duration_diff_ts, duration_diff_us);
+	if (ret < 0) {
+		ULOGE("failed convert timespec (%s)", strerror(-ret));
+		return ret;
+	}
+
+	return 0;
+}
+
 int time_timespec_diff_in_range(const struct timespec *t1,
 				const struct timespec *t2,
 				uint64_t range_us,

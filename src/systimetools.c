@@ -35,6 +35,7 @@
 #  include <windows.h>
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -169,13 +170,15 @@ static int parse_date(const char *s, size_t n, int *year, int *mon, int *mday)
 }
 
 /*
- * aaa, DD bbb YYYY
+ * 1) aaa, DD bbb YYYY
+ * 2) aaa, bbb DD YYYY
  */
 static int parse_date_rfc1123(const char *s, size_t n,
 		int *year, int *mon, int *mday)
 {
 	int ret, offset = 0;
 	char year_s[5], mon_s[4], mday_s[3], wday_s[4];
+	bool inverted = false;
 
 	if (s[3] != ',')
 		return -EINVAL;
@@ -185,22 +188,53 @@ static int parse_date_rfc1123(const char *s, size_t n,
 	wday_s[2] = s[offset++];
 	wday_s[3] = '\0';
 	offset += 2;
-	mday_s[0] = s[offset++];
-	if (s[offset] == ' ') {
-		/* 1 digit month day (eg. '5') */
-		mday_s[1] = '\0';
-		mday_s[2] = '\0';
+
+	/* Detect format:
+	 * If the first char after comma is a digit → normal (DD bbb YYYY)
+	 * If it's a letter → inverted (bbb DD YYYY)
+	 */
+	if (!isdigit((unsigned char)s[offset]))
+		inverted = true;
+
+	if (!inverted) {
+		mday_s[0] = s[offset++];
+		if (s[offset] == ' ') {
+			/* 1 digit month day (eg. '5') */
+			mday_s[1] = '\0';
+			mday_s[2] = '\0';
+		} else {
+			/* 2 digit month day, including leading 0
+			 * (eg. '05' or '23') */
+			mday_s[1] = s[offset++];
+			mday_s[2] = '\0';
+		}
+		offset++;
+
+		mon_s[0] = s[offset++];
+		mon_s[1] = s[offset++];
+		mon_s[2] = s[offset++];
+		mon_s[3] = '\0';
+		offset++;
 	} else {
-		/* 2 digit month day, including leading 0 (eg. '05' or '23') */
-		mday_s[1] = s[offset++];
-		mday_s[2] = '\0';
+		mon_s[0] = s[offset++];
+		mon_s[1] = s[offset++];
+		mon_s[2] = s[offset++];
+		mon_s[3] = '\0';
+		offset++;
+
+		mday_s[0] = s[offset++];
+		if (s[offset] == ' ') {
+			/* 1 digit month day (eg. '5') */
+			mday_s[1] = '\0';
+			mday_s[2] = '\0';
+		} else {
+			/* 2 digit month day, including leading 0
+			 * (eg. '05' or '23') */
+			mday_s[1] = s[offset++];
+			mday_s[2] = '\0';
+		}
+		offset++;
 	}
-	offset++;
-	mon_s[0] = s[offset++];
-	mon_s[1] = s[offset++];
-	mon_s[2] = s[offset++];
-	mon_s[3] = '\0';
-	offset++;
 	year_s[0] = s[offset++];
 	year_s[1] = s[offset++];
 	year_s[2] = s[offset++];
@@ -325,6 +359,14 @@ static int parse_time(const char *s, size_t n,
 		gmtoff_min_s[1] = '0';
 		gmtoff_min_s[2] = '\0';
 	} else if (n == 2 && (s[0] == 'U') && (s[1] == 'T')) {
+		gmtoff_sign = 1;
+		gmtoff_hour_s[0] = '0';
+		gmtoff_hour_s[1] = '0';
+		gmtoff_hour_s[2] = '\0';
+		gmtoff_min_s[0] = '0';
+		gmtoff_min_s[1] = '0';
+		gmtoff_min_s[2] = '\0';
+	} else if (n == 3 && (s[0] == 'U') && (s[1] == 'T') && (s[2] == 'C')) {
 		gmtoff_sign = 1;
 		gmtoff_hour_s[0] = '0';
 		gmtoff_hour_s[1] = '0';
