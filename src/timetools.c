@@ -428,6 +428,33 @@ exit:
 	return ret;
 }
 
+int time_timespec_latest(const struct timespec *t1,
+			const struct timespec *t2,
+			const struct timespec *t3,
+			struct timespec *ts)
+{
+	if (ts == NULL)
+		return -1;
+
+	const struct timespec *latest = NULL;
+
+	if (t1 != NULL)
+		latest = t1;
+
+	if (t2 != NULL && (latest == NULL || time_timespec_cmp(t2, latest) > 0))
+		latest = t2;
+
+	if (t3 != NULL && (latest == NULL || time_timespec_cmp(t3, latest) > 0))
+		latest = t3;
+
+	if (latest == NULL)
+		return -1;
+
+	*ts = *latest;
+
+	return 0;
+}
+
 int time_timespec_add_ns(const struct timespec *ts, int64_t delta,
 			 struct timespec *res)
 {

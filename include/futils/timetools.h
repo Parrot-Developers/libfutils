@@ -173,6 +173,23 @@ int time_timespec_diff_now(const struct timespec *value, struct timespec *diff);
 int time_timespec_cmp(const struct timespec *t1, const struct timespec *t2);
 
 /**
+ * @brief Return the most recent of up to three timespec values
+ *
+ * @param t1 pointer to first timespec value (may be NULL)
+ * @param t2 pointer to second timespec value (may be NULL)
+ * @param t3 pointer to third timespec value (may be NULL)
+ * @param ts pointer to a timespec that will be set to the latest value
+ *			 (must be non NULL)
+ *
+ * @return  0 on success
+ *         -1 if all of t1, t2, t3 are NULL, or if ts is NULL
+ */
+int time_timespec_latest(const struct timespec *t1,
+			const struct timespec *t2,
+			const struct timespec *t3,
+			struct timespec *ts);
+
+/**
  * @brief Add (or substract if delta < 0) to a timespec.
  * @param ts : source timespec.
  * @param delta : value to add (or substract if delta < 0) in us.
