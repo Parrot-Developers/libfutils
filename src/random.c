@@ -92,8 +92,6 @@ ULOG_DECLARE_TAG(futils_random);
 
 #if !defined(HAVE_STDATOMIC) && defined(__GNUC__)
 
-#define ATOMIC_VAR_INIT(v) (v)
-
 /* codecheck_ignore[NEW_TYPEDEFS] */
 typedef unsigned int atomic_uint;
 
@@ -337,7 +335,7 @@ struct pool {
 	uint8_t buffer[512];
 };
 
-static atomic_uint seed_era = ATOMIC_VAR_INIT(1); /* current seed era */
+static atomic_uint seed_era = 1; /* current seed era */
 
 #ifdef HAVE_THREAD_LOCAL
 
